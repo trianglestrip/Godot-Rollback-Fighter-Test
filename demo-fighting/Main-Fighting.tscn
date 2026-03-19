@@ -6,6 +6,7 @@
 [ext_resource type="Script" uid="uid://b4u2wfjkeqnop" path="res://addons/delta_rollback/NetworkTimer.gd" id="4_0f5y5"]
 [ext_resource type="PackedScene" uid="uid://b8j8obrvlqulg" path="res://demo-fighting/fighter.tscn" id="4_2ampb"]
 [ext_resource type="Texture2D" uid="uid://y2qiqet2veue" path="res://assets/godot.png" id="5_ymjv0"]
+[ext_resource type="Script" path="res://demo-fighting/scripts/EnemyManager.gd" id="6_enemymanager"]
 
 [sub_resource type="FontFile" id="1"]
 fallbacks = Array[Font]([ExtResource("2_dfey0")])
@@ -370,6 +371,11 @@ autoplay = &"idle"
 modulate = Color(0.403922, 1, 0.415686, 1)
 
 [node name="SpawnParent" type="SGFixedNode2D" parent="." unique_id=347195281]
+
+[node name="EnemyManager" type="Node2D" parent="."]
+script = ExtResource("6_enemymanager")
+enemy_scene = ExtResource("4_2ampb")
+max_enemies = 5
 
 [connection signal="pressed" from="CanvasLayer/MainMenu/LocalButton" to="." method="_on_LocalButton_pressed"]
 [connection signal="pressed" from="CanvasLayer/MainMenu/OnlineButton" to="." method="_on_OnlineButton_pressed"]

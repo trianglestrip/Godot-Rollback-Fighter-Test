@@ -30,8 +30,12 @@ func _ready() -> void:
 	$ServerPlayer.spawn_parent = $SpawnParent
 	$ClientPlayer.spawn_parent = $SpawnParent
 
-	# 添加EnemyAI到ClientPlayer节点上，让右侧角色能够自动AI移动
-	_add_enemy_ai_to_client_player()
+	# 设置ServerPlayer为玩家
+	$ServerPlayer.add_to_group("player")
+	$ServerPlayer.is_enemy = false
+	
+	# 移除ClientPlayer，我们将使用EnemyManager生成多个敌人
+	$ClientPlayer.queue_free()
 
 	var cmdline_args = OS.get_cmdline_args()
 	if "server" in cmdline_args:
@@ -43,6 +47,30 @@ func _ready() -> void:
 		main_menu.visible = false
 		connection_panel.visible = false
 		reset_button.visible = false
+
+	# 生成三个敌人
+	_generate_enemies()
+
+func _generate_enemies() -> void:
+	# 获取EnemyManager
+	var enemy_manager = $EnemyManager
+	if not enemy_manager:
+		return
+	
+	# 设置玩家引用
+	enemy_manager.update_player_reference($ServerPlayer)
+	
+	# 生成三个敌人，逐个生成
+	var spawn_positions = [
+		Vector2(700, 519),  # 中间位置
+		Vector2(900, 519),  # 右侧位置
+		Vector2(1100, 519)  # 最右侧位置
+	]
+	
+	for pos in spawn_positions:
+		enemy_manager.spawn_enemy(pos)
+	
+	print("已生成三个敌人")
 
 func _add_enemy_ai_to_client_player() -> void:
 	# 检查是否已经有EnemyAI节点
