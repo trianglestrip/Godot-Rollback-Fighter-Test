@@ -19,11 +19,13 @@ func _ready():
         queue_free()
         return
     
-    # 设置为敌人
-    enemy.set_as_enemy()
-    
-    # 将AI添加到游戏的网络处理流程中
-    add_to_group("enemy_ai")
+    # 检查是否已经是敌人，避免无限递归
+    if not enemy.is_enemy:
+        # 将AI添加到游戏的网络处理流程中
+        add_to_group("enemy_ai")
+    else:
+        # 已经是敌人，直接添加到AI组
+        add_to_group("enemy_ai")
 
 func _network_process():
     if not enemy or enemy.health <= 0:

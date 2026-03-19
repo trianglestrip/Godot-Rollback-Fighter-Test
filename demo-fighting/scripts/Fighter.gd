@@ -86,14 +86,20 @@ var current_anim_tick : int = 0
 var is_enemy : bool = false
 
 func set_as_enemy():
+	# 避免重复设置和无限递归
+	if is_enemy:
+		return
+	
 	is_enemy = true
 	remove_from_group("players")
 	add_to_group("enemies")
 	# 禁用玩家输入
 	input_prefix = "disabled"
 	
-	# 添加简单AI逻辑
-	add_child(preload("res://demo-fighting/scripts/EnemyAI.gd").new())
+	# 检查是否已经有EnemyAI节点，避免重复添加
+	if not has_node("EnemyAI"):
+		# 添加简单AI逻辑
+		add_child(preload("res://demo-fighting/scripts/EnemyAI.gd").new())
 
 func _ready():
 	add_to_group("network_sync")
@@ -460,7 +466,7 @@ func get_hit():
 				final_enemy = current_enemy
 		
 		#After the final hit behavior has been determined, we apply changes to the fighter
-		            
+					
 		health -= final_hit_behavior.damage
 		if health > 0:
 			state_transition($States.find_child(final_hit_behavior.hit_state))
