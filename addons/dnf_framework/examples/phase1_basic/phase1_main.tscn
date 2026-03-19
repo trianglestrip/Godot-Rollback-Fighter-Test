@@ -1,0 +1,101 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="PackedScene" path="res://addons/dnf_framework/examples/phase1_basic/phase1_character.tscn" id="1"]
+[ext_resource type="Script" path="res://addons/dnf_framework/examples/phase1_basic/phase1_main.gd" id="2"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ground"]
+size = Vector2(800, 30)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_plat"]
+size = Vector2(120, 16)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_plat2"]
+size = Vector2(100, 16)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wall"]
+size = Vector2(20, 500)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wall2"]
+size = Vector2(20, 500)
+
+[node name="Phase1Main" type="Node2D"]
+script = ExtResource("2")
+
+[node name="Character" parent="." instance=ExtResource("1")]
+position = Vector2(300, 200)
+
+[node name="Ground" type="StaticBody2D" parent="."]
+position = Vector2(400, 350)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Ground"]
+shape = SubResource("RectangleShape2D_ground")
+
+[node name="GroundSprite" type="ColorRect" parent="Ground"]
+offset_left = -400.0
+offset_top = -15.0
+offset_right = 400.0
+offset_bottom = 15.0
+color = Color(0.3, 0.3, 0.3, 1.0)
+
+[node name="Platform1" type="StaticBody2D" parent="."]
+position = Vector2(200, 250)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platform1"]
+shape = SubResource("RectangleShape2D_plat")
+
+[node name="PlatSprite" type="ColorRect" parent="Platform1"]
+offset_left = -60.0
+offset_top = -8.0
+offset_right = 60.0
+offset_bottom = 8.0
+color = Color(0.5, 0.4, 0.3, 1.0)
+
+[node name="Platform2" type="StaticBody2D" parent="."]
+position = Vector2(550, 200)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platform2"]
+shape = SubResource("RectangleShape2D_plat2")
+
+[node name="PlatSprite" type="ColorRect" parent="Platform2"]
+offset_left = -50.0
+offset_top = -8.0
+offset_right = 50.0
+offset_bottom = 8.0
+color = Color(0.4, 0.5, 0.3, 1.0)
+
+[node name="WallLeft" type="StaticBody2D" parent="."]
+position = Vector2(0, 200)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="WallLeft"]
+shape = SubResource("RectangleShape2D_wall")
+
+[node name="WallSprite" type="ColorRect" parent="WallLeft"]
+offset_left = -10.0
+offset_top = -250.0
+offset_right = 10.0
+offset_bottom = 250.0
+color = Color(0.35, 0.35, 0.35, 1.0)
+
+[node name="WallRight" type="StaticBody2D" parent="."]
+position = Vector2(800, 200)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="WallRight"]
+shape = SubResource("RectangleShape2D_wall2")
+
+[node name="WallSprite" type="ColorRect" parent="WallRight"]
+offset_left = -10.0
+offset_top = -250.0
+offset_right = 10.0
+offset_bottom = 250.0
+color = Color(0.35, 0.35, 0.35, 1.0)
+
+[node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="Info" type="Label" parent="HUD"]
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 400.0
+offset_bottom = 80.0
+text = "Phase 1 Test: Walk / Run / Jump
+WASD = Move, W = Jump, K(hold) = Run
+J = Punch (input buffer test)"

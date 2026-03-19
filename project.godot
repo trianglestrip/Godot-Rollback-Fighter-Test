@@ -31,7 +31,7 @@ window/stretch/mode="viewport"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/delta_rollback/plugin.cfg", "res://addons/godot_mcp/plugin.cfg")
+enabled=PackedStringArray("res://addons/delta_rollback/plugin.cfg", "res://addons/dnf_framework/plugin.cfg", "res://addons/godot_mcp/plugin.cfg")
 
 [godot_mcp]
 

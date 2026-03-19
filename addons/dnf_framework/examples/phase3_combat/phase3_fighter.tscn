@@ -1,0 +1,73 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://addons/dnf_framework/examples/phase3_combat/phase3_fighter.gd" id="1"]
+[ext_resource type="Script" path="res://addons/dnf_framework/combat/scripts/dnf_hitbox.gd" id="2"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
+size = Vector2(24, 32)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_hitbox"]
+size = Vector2(24, 24)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_hurtbox"]
+size = Vector2(22, 30)
+
+[node name="Phase3Fighter" type="CharacterBody2D"]
+script = ExtResource("1")
+gravity = 30.0
+move_speed = 5.0
+run_speed = 9.0
+jump_speed = -14.0
+max_health = 100
+
+[node name="BodyRect" type="ColorRect" parent="."]
+offset_left = -12.0
+offset_top = -32.0
+offset_right = 12.0
+offset_bottom = 0.0
+color = Color(0.2, 0.5, 0.8, 1.0)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_body")
+
+[node name="Hitbox" type="Area2D" parent="."]
+script = ExtResource("2")
+collision_layer = 8
+collision_mask = 4
+monitoring = false
+monitorable = false
+
+[node name="HitboxShape" type="CollisionShape2D" parent="Hitbox"]
+position = Vector2(20, -16)
+shape = SubResource("RectangleShape2D_hitbox")
+
+[node name="HitboxRect" type="ColorRect" parent="Hitbox"]
+offset_left = 8.0
+offset_top = -28.0
+offset_right = 32.0
+offset_bottom = -4.0
+color = Color(1.0, 0.2, 0.1, 0.5)
+visible = false
+
+[node name="Hurtbox" type="Area2D" parent="."]
+collision_layer = 4
+collision_mask = 8
+
+[node name="HurtboxShape" type="CollisionShape2D" parent="Hurtbox"]
+shape = SubResource("RectangleShape2D_hurtbox")
+
+[node name="StateLabel" type="Label" parent="."]
+offset_left = -40.0
+offset_top = -55.0
+offset_right = 40.0
+offset_bottom = -35.0
+horizontal_alignment = 1
+text = "IDLE [0]"
+
+[node name="HealthBar" type="ProgressBar" parent="."]
+offset_left = -25.0
+offset_top = -65.0
+offset_right = 25.0
+offset_bottom = -57.0
+value = 100.0
+show_percentage = false

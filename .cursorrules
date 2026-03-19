@@ -1,0 +1,80 @@
+# === Godot 4 Project Rules ===
+
+## Language
+- Use GDScript (Godot 4 syntax)
+- Prefer strongly typed variables
+
+## Architecture
+- Use Node-based architecture
+- Avoid monolithic scripts
+- Split logic into components:
+  - SkillComponent
+  - HitboxComponent
+  - StateMachine
+
+## Naming
+- Classes: PascalCase
+- Variables: snake_case
+- Signals: snake_case
+
+## Scene Rules
+- One responsibility per scene
+- Do NOT create deep node trees
+- Keep scenes reusable
+
+## Performance
+- Avoid spawning nodes every frame
+- Reuse objects (object pooling if needed)
+- Prefer data-driven systems
+
+## Animation
+- Do NOT rely heavily on AnimationPlayer
+- Prefer frame-based animation systems
+
+## Combat System
+- Use hitbox / hurtbox system
+- Avoid physics-based damage detection
+- All attacks must be event-driven
+
+## Skills
+- Skills must be data-driven (Resource)
+- Avoid hardcoding skill logic
+- Use time-based or frame-based events
+
+## Code Style
+- Avoid magic numbers
+- Use constants
+- Keep functions small (<50 lines)
+
+## Testing
+- Prefer deterministic logic
+- Allow AI/TestAgent to trigger actions
+
+## Forbidden
+- No tightly coupled systems
+- No direct node path dependencies (use signals)
+- No logic inside UI nodes
+
+## Combat Rules (DNF-style)
+
+- Combat must be frame-based, not animation-driven
+- Hitbox must be controlled by frame events
+- Each frame can define:
+  - hitbox
+  - movement
+  - effects
+
+- No direct damage in animation
+- All damage goes through Hitbox system
+
+## Skill System
+
+- Skill = Animation + Events + Data
+- Use SkillData (Resource)
+- Support multi-hit attacks
+- Support cancel windows
+
+## AI Testing
+
+- All skills must be callable by AI
+- No input-only logic

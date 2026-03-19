@@ -1,0 +1,33 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://addons/dnf_framework/examples/phase1_basic/phase1_character.gd" id="1"]
+[ext_resource type="Script" path="res://addons/dnf_framework/frame_animation/scripts/frame_animation_player.gd" id="2"]
+[ext_resource type="Script" path="res://addons/dnf_framework/frame_input/scripts/input_buffer.gd" id="3"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_col"]
+size = Vector2(24, 32)
+
+[node name="Phase1Character" type="CharacterBody2D"]
+script = ExtResource("1")
+gravity = 30.0
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+scale = Vector2(2, 2)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_col")
+
+[node name="FrameAnimationPlayer" type="Node" parent="."]
+script = ExtResource("2")
+
+[node name="InputBuffer" type="Node" parent="."]
+script = ExtResource("3")
+buffer_size = 10
+
+[node name="Label" type="Label" parent="."]
+offset_top = -60.0
+offset_left = -30.0
+offset_right = 30.0
+offset_bottom = -30.0
+horizontal_alignment = 1
+text = "IDLE"
