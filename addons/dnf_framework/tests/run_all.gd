@@ -18,6 +18,7 @@ const P_FramePlayer = preload("res://addons/dnf_framework/runtime/frame/frame_pl
 const P_HitboxComp = preload("res://addons/dnf_framework/runtime/combat/hitbox_component.gd")
 const P_HurtboxComp = preload("res://addons/dnf_framework/runtime/combat/hurtbox_component.gd")
 const P_SkillCompV2 = preload("res://addons/dnf_framework/runtime/skill/skill_component_v2.gd")
+const P_HitboxTemplates = preload("res://addons/dnf_framework/editor/templates/hitbox_templates.gd")
 
 var _pass_count: int = 0
 var _fail_count: int = 0
@@ -109,6 +110,19 @@ func _ready() -> void:
 		"_test_frame_player_save_load",
 		"_test_hitbox_component_basic",
 		"_test_skill_component_v2_basic",
+		"_test_hit_behavior_expanded",
+	])
+
+	_run_suite("Phase10_Editor", [
+		"_test_editor_scripts_load",
+		"_test_hitbox_templates",
+		"_test_inspector_plugin_load",
+	])
+
+	_run_suite("Phase11_Panels", [
+		"_test_skill_editor_load",
+		"_test_character_editor_load",
+		"_test_effect_editor_load",
 	])
 
 	var total := _pass_count + _fail_count
@@ -1129,6 +1143,94 @@ func _test_skill_component_v2_basic() -> void:
 	_ok(not sc.is_active(), "inactive after interrupt")
 
 	fp.queue_free(); hc.queue_free(); sc.queue_free()
+
+
+func _test_hit_behavior_expanded() -> void:
+	_begin("HitBehavior: expanded fields")
+	var hb := DNFHitBehavior.new()
+	_eq(hb.damage_type, DNFHitBehavior.DamageType.PHYSICAL_PERCENT, "default type physical")
+	_eq(hb.element, DNFHitBehavior.Element.NEUTRAL, "default element neutral")
+	_approx(hb.skill_coefficient, 1.0, 0.01, "default coefficient 1.0")
+	_eq(hb.fixed_damage, 0, "default fixed_damage 0")
+
+	hb.damage_type = DNFHitBehavior.DamageType.INDEPENDENT
+	hb.element = DNFHitBehavior.Element.FIRE
+	hb.skill_coefficient = 2.5
+	hb.fixed_damage = 500
+	_eq(hb.damage_type, DNFHitBehavior.DamageType.INDEPENDENT, "set independent")
+	_eq(hb.element, DNFHitBehavior.Element.FIRE, "set fire")
+	_approx(hb.skill_coefficient, 2.5, 0.01, "set coefficient 2.5")
+	_eq(hb.fixed_damage, 500, "set fixed 500")
+
+
+# ====================================================================
+# Phase 10: Editor — Timeline + Preview + Inspector
+# ====================================================================
+
+func _test_editor_scripts_load() -> void:
+	_begin("Editor: timeline scripts load")
+	var timeline = load("res://addons/dnf_framework/editor/timeline/timeline_root.gd")
+	_ok(timeline != null, "timeline_root.gd loads")
+	var ruler = load("res://addons/dnf_framework/editor/timeline/frame_ruler.gd")
+	_ok(ruler != null, "frame_ruler.gd loads")
+	var phase_track = load("res://addons/dnf_framework/editor/timeline/phase_track.gd")
+	_ok(phase_track != null, "phase_track.gd loads")
+	var event_track = load("res://addons/dnf_framework/editor/timeline/event_track.gd")
+	_ok(event_track != null, "event_track.gd loads")
+	var move_track = load("res://addons/dnf_framework/editor/timeline/movement_track.gd")
+	_ok(move_track != null, "movement_track.gd loads")
+	var armor_track = load("res://addons/dnf_framework/editor/timeline/armor_track.gd")
+	_ok(armor_track != null, "armor_track.gd loads")
+	var sprite_prev = load("res://addons/dnf_framework/editor/preview/sprite_preview.gd")
+	_ok(sprite_prev != null, "sprite_preview.gd loads")
+	var hitbox_prev = load("res://addons/dnf_framework/editor/preview/hitbox_preview.gd")
+	_ok(hitbox_prev != null, "hitbox_preview.gd loads")
+
+
+func _test_hitbox_templates() -> void:
+	_begin("Editor: hitbox templates")
+	var names = P_HitboxTemplates.get_template_names()
+	_eq(names.size(), 6, "6 templates")
+	_ok("前方横斩" in names, "slash template exists")
+	_ok("弹道碰撞" in names, "projectile template exists")
+
+	var templates = P_HitboxTemplates.get_templates()
+	_eq(templates.size(), 6, "6 template instances")
+
+	var slash = P_HitboxTemplates.create_from_template("前方横斩")
+	_ok(slash != null, "create_from_template works")
+	_eq(slash.shape_size, Vector2(80, 60), "slash shape")
+
+	var missing = P_HitboxTemplates.create_from_template("不存在")
+	_ok(missing == null, "missing returns null")
+
+
+func _test_inspector_plugin_load() -> void:
+	_begin("Editor: inspector plugin load")
+	var script = load("res://addons/dnf_framework/editor/inspectors/dnf_inspector_plugin.gd")
+	_ok(script != null, "inspector plugin loads")
+
+
+# ====================================================================
+# Phase 11: Editor Panels — Skill / Character / Effect
+# ====================================================================
+
+func _test_skill_editor_load() -> void:
+	_begin("Editor: skill_editor.gd loads")
+	var script = load("res://addons/dnf_framework/editor/panels/skill_editor.gd")
+	_ok(script != null, "skill_editor.gd loads")
+
+
+func _test_character_editor_load() -> void:
+	_begin("Editor: character_editor.gd loads")
+	var script = load("res://addons/dnf_framework/editor/panels/character_editor.gd")
+	_ok(script != null, "character_editor.gd loads")
+
+
+func _test_effect_editor_load() -> void:
+	_begin("Editor: effect_editor.gd loads")
+	var script = load("res://addons/dnf_framework/editor/panels/effect_editor.gd")
+	_ok(script != null, "effect_editor.gd loads")
 
 
 # -- Phase 6 helpers --

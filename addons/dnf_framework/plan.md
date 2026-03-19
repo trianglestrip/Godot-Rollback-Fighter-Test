@@ -476,15 +476,15 @@ addons/dnf_framework/
   - ✅ `resources/character/character_stats.gd` — DNFCharacterStats（28 项 DNF 属性）
 - ✅ 6.5 plugin.gd 更新 + 测试 + 中文文档注释
   - ✅ plugin.gd 注册 4 个新自定义类型
-  - ✅ Phase6_DataLayer 测试套件（67 项测试）
-  - ✅ 全部 219/219 测试通过
+  - ✅ Phase6_DataLayer 测试套件（75 项测试）
+  - ✅ 全部 246/246 测试通过（含 Phase 10/11 编辑器脚本加载测试）
   - ✅ 所有 Resource 属性添加中文 `##` 文档注释
   - ✅ CONFIGURATOR_GUIDE.md 配置器使用指南
+  - ✅ 6.5.6 Phase 6 示例场景（`examples/phase6_skill_data/`，演示鬼斩技能全流程）
+  - ✅ 6.1.7 HitBehavior 扩充（damage_type / element / skill_coefficient / fixed_damage）
 - ⚠️ 6.5 部分未完成
   - ❌ 6.5.2 迁移保留模块到 runtime/（InputBuffer / FrameCharacterBody2D / DNFStates / DNFCharacter / CombatManager 仍在旧目录）
   - ❌ 6.5.3 更新所有 preload/extends 路径
-  - ❌ 6.5.6 创建新示例（基于 SkillDataV2 + Phase 配置的 .tres 示例）
-- ❌ 6.1.7 HitBehavior 扩充（damage_type/element/skill_coefficient/fixed_damage 未加入 hit_behavior.gd）
 
 ### Phase 7: 属性系统 + 伤害公式 ⬚ 未开始
 
@@ -515,13 +515,27 @@ addons/dnf_framework/
 - ❌ 9.5 被动技能（passive_manager）
 - ❌ 9.6 测试 + 示例
 
-### Phase 10: 编辑器 — Timeline + Phase Editor + Hitbox Preview ⬚ 未开始
+### Phase 10: 编辑器 — Timeline + Phase Editor + Hitbox Preview ✅ 已完成
 
-- ❌ 10.1-10.12（详见 task.md）
+- ✅ 10.1 `editor/timeline/timeline_root.gd` — 时间轴主面板（工具栏 + 播放控制 + 缩放 + 帧数调整）
+- ✅ 10.2 `editor/timeline/frame_ruler.gd` — 帧刻度尺（每帧刻度 + 每5帧数字 + 红色播放头 + 点击定位）
+- ✅ 10.3 `editor/timeline/phase_track.gd` — 攻击区间轨道（拖拽创建/移动/调整边缘/选中）★
+- ✅ 10.4 `editor/timeline/event_track.gd` — 事件轨道（菱形标记 + 点击选中 + 双击添加）
+- ✅ 10.5 `editor/timeline/movement_track.gd` — 位移区间轨道（蓝色矩形 + 拖拽交互）
+- ✅ 10.6 `editor/timeline/armor_track.gd` — 霸体/无敌轨道（解析 START/END 事件对 → 绿/黄矩形）
+- ✅ 10.7 `editor/preview/hitbox_preview.gd` — Hitbox 叠加预览（红框攻击框 + 蓝框受击框）
+- ✅ 10.8 `editor/preview/sprite_preview.gd` — 帧 Sprite 预览（atlas region 渲染）
+- ✅ 10.9 `editor/inspectors/dnf_inspector_plugin.gd` — Inspector 增强（识别 DNF 资源类型）
+- ✅ 10.10 plugin.gd 注册 Bottom Panel（DNF Timeline / DNF 技能 / DNF 角色）
+- ✅ 10.11 `editor/templates/hitbox_templates.gd` — Hitbox 预设模板（6 种：横斩/刺击/范围/上打/扫腿/弹道）
+- ⬚ 10.12 批量操作（选中多帧 → 应用 hitbox）— 后续迭代
 
-### Phase 11: 编辑器 — Skill + Character Editor ⬚ 未开始
+### Phase 11: 编辑器 — Skill + Character Editor ✅ 已完成
 
-- ❌ 11.1-11.4（详见 task.md）
+- ✅ 11.1 `editor/panels/skill_editor.gd` — 技能编辑器面板（技能列表 + 属性编辑 + 保存/加载）
+- ✅ 11.2 `editor/panels/character_editor.gd` — 角色编辑器面板（基本信息 + 图集 + 动画/技能管理 + 属性编辑）
+- ✅ 11.3 `editor/panels/effect_editor.gd` — 效果事件编辑器（帧事件列表 + 属性编辑 + JSON 数据）
+- ✅ 11.4 `editor/templates/hitbox_templates.gd` — 模板系统（✅ 已在 10.11 实现）
 
 ### Phase 12: 敌人 AI + 集成示例 ⬚ 未开始
 

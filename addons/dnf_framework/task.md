@@ -22,8 +22,8 @@
 - [x] 6.1.4 `resources/skill/movement_phase.gd` — DNFMovementPhase
 - [x] 6.1.5 `resources/skill/frame_event.gd` — DNFFrameEvent（12 种事件类型）
 - [x] 6.1.6 `resources/combat/hitbox_data.gd` — DNFHitboxData（含 HitLevel 枚举）
-- [ ] 6.1.7 `combat/scripts/hit_behavior.gd` — HitBehavior 扩充
-  - 待加: damage_type / element / skill_coefficient / fixed_damage
+- [x] 6.1.7 `combat/scripts/hit_behavior.gd` — HitBehavior 扩充
+  - ✅ damage_type / element / skill_coefficient / fixed_damage
 
 ### 6.2 SkillDataV2 ✅
 
@@ -54,8 +54,8 @@
   - FrameAnimationPlayer → runtime/frame/（或保留）
 - [ ] 6.5.3 更新所有 preload/extends 路径
 - [x] 6.5.4 更新 plugin.gd 注册（新增 4 个自定义类型）
-- [x] 6.5.5 适配测试（Phase6_DataLayer 67 项，总计 219/219 通过）
-- [ ] 6.5.6 创建新示例（基于 SkillDataV2 的 .tres 技能配置 + 场景）
+- [x] 6.5.5 适配测试（Phase6_DataLayer 75 项 + Phase10_Editor + Phase11_Panels，总计 246/246 通过）
+- [x] 6.5.6 创建新示例（`examples/phase6_skill_data/` 鬼斩技能全流程演示）
 - [x] 6.5.7 所有 Resource 添加中文 `##` 文档注释
 - [x] 6.5.8 CONFIGURATOR_GUIDE.md 配置器使用指南
 
@@ -90,27 +90,27 @@
 - [ ] 9.5 被动技能 (passive_manager)
 - [ ] 9.6 测试 + 示例
 
-## Phase 10: 编辑器 — Timeline + Phase Editor + Hitbox Preview ⭐
+## Phase 10: 编辑器 — Timeline + Phase Editor + Hitbox Preview ✅
 
-- [ ] 10.1 `editor/timeline/timeline_root.gd` — 时间轴主控件
-- [ ] 10.2 `editor/timeline/frame_ruler.gd` — 帧刻度尺
-- [ ] 10.3 `editor/timeline/phase_track.gd` — 攻击区间轨道 ★
-- [ ] 10.4 `editor/timeline/event_track.gd` — 事件轨道
-- [ ] 10.5 `editor/timeline/movement_track.gd` — 位移区间轨道
-- [ ] 10.6 `editor/timeline/armor_track.gd` — 霸体/无敌轨道
-- [ ] 10.7 `editor/preview/hitbox_preview.gd` — Sprite 上画碰撞体
-- [ ] 10.8 `editor/preview/sprite_preview.gd` — 帧 Sprite 预览
-- [ ] 10.9 `editor/inspectors/dnf_inspector_plugin.gd` — Inspector 增强
-- [ ] 10.10 注册 Bottom Panel 到 plugin.gd
-- [ ] 10.11 Hitbox 模板系统 (Slash/Thrust/AOE/Projectile 预设)
-- [ ] 10.12 批量操作 (选中多帧 → 应用 hitbox)
+- [x] 10.1 `editor/timeline/timeline_root.gd` — 时间轴主面板
+- [x] 10.2 `editor/timeline/frame_ruler.gd` — 帧刻度尺
+- [x] 10.3 `editor/timeline/phase_track.gd` — 攻击区间轨道 ★
+- [x] 10.4 `editor/timeline/event_track.gd` — 事件轨道
+- [x] 10.5 `editor/timeline/movement_track.gd` — 位移区间轨道
+- [x] 10.6 `editor/timeline/armor_track.gd` — 霸体/无敌轨道
+- [x] 10.7 `editor/preview/hitbox_preview.gd` — Hitbox 叠加预览
+- [x] 10.8 `editor/preview/sprite_preview.gd` — 帧 Sprite 预览
+- [x] 10.9 `editor/inspectors/dnf_inspector_plugin.gd` — Inspector 增强
+- [x] 10.10 注册 Bottom Panel（DNF Timeline / DNF 技能 / DNF 角色）
+- [x] 10.11 Hitbox 模板系统 (横斩/刺击/范围/上打/扫腿/弹道 预设)
+- [ ] 10.12 批量操作 (选中多帧 → 应用 hitbox) — 后续迭代
 
-## Phase 11: 编辑器 — Skill + Character Editor
+## Phase 11: 编辑器 — Skill + Character Editor ✅
 
-- [ ] 11.1 `editor/panels/skill_editor.gd`
-- [ ] 11.2 `editor/panels/character_editor.gd`
-- [ ] 11.3 `editor/panels/effect_editor.gd`
-- [ ] 11.4 模板系统 (近战/远程/Boss 预设 .tres)
+- [x] 11.1 `editor/panels/skill_editor.gd` — 技能编辑器面板
+- [x] 11.2 `editor/panels/character_editor.gd` — 角色编辑器面板
+- [x] 11.3 `editor/panels/effect_editor.gd` — 效果事件编辑器
+- [x] 11.4 模板系统 (hitbox_templates.gd 6 种预设)
 
 ## Phase 12: 敌人 AI + 集成示例
 
