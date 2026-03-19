@@ -3,6 +3,22 @@ extends Node
 ## DNF Framework 自动化测试运行器
 ## 用法: godot --headless --path <project> res://addons/dnf_framework/tests/run_all.tscn
 
+const P_FrameData = preload("res://addons/dnf_framework/resources/animation/frame_data.gd")
+const P_AnimData = preload("res://addons/dnf_framework/resources/animation/animation_data.gd")
+const P_HitboxData = preload("res://addons/dnf_framework/resources/combat/hitbox_data.gd")
+const P_FrameEvent = preload("res://addons/dnf_framework/resources/skill/frame_event.gd")
+const P_AttackPhase = preload("res://addons/dnf_framework/resources/skill/attack_phase.gd")
+const P_MovementPhase = preload("res://addons/dnf_framework/resources/skill/movement_phase.gd")
+const P_SkillDataV2 = preload("res://addons/dnf_framework/resources/skill/skill_data_v2.gd")
+const P_SkillUIData = preload("res://addons/dnf_framework/resources/skill/skill_ui_data.gd")
+const P_InputCondition = preload("res://addons/dnf_framework/resources/skill/input_condition.gd")
+const P_CharStats = preload("res://addons/dnf_framework/resources/character/character_stats.gd")
+const P_CharData = preload("res://addons/dnf_framework/resources/character/character_data.gd")
+const P_FramePlayer = preload("res://addons/dnf_framework/runtime/frame/frame_player.gd")
+const P_HitboxComp = preload("res://addons/dnf_framework/runtime/combat/hitbox_component.gd")
+const P_HurtboxComp = preload("res://addons/dnf_framework/runtime/combat/hurtbox_component.gd")
+const P_SkillCompV2 = preload("res://addons/dnf_framework/runtime/skill/skill_component_v2.gd")
+
 var _pass_count: int = 0
 var _fail_count: int = 0
 var _test_name: String = ""
@@ -74,6 +90,25 @@ func _ready() -> void:
 		"_test_knockout",
 		"_test_state_flow_cycle",
 		"_test_save_load_mid_fight",
+	])
+
+	_run_suite("Phase6_DataLayer", [
+		"_test_frame_data_resource",
+		"_test_animation_data_resource",
+		"_test_hitbox_data_resource",
+		"_test_frame_event_resource",
+		"_test_attack_phase_resource",
+		"_test_movement_phase_resource",
+		"_test_skill_data_v2_resource",
+		"_test_skill_data_v2_phase_query",
+		"_test_skill_data_v2_event_query",
+		"_test_input_condition_resource",
+		"_test_character_stats_resource",
+		"_test_character_data_resource",
+		"_test_frame_player_basic",
+		"_test_frame_player_save_load",
+		"_test_hitbox_component_basic",
+		"_test_skill_component_v2_basic",
 	])
 
 	var total := _pass_count + _fail_count
@@ -861,3 +896,284 @@ func _test_save_load_mid_fight() -> void:
 
 	p1.queue_free(); p2.queue_free()
 	r1.queue_free(); r2.queue_free()
+
+
+# ====================================================================
+# Phase 6: Data Layer + FramePlayer + Phase 系统
+# ====================================================================
+
+func _test_frame_data_resource() -> void:
+	_begin("FrameData: create + defaults")
+	var fd = P_FrameData.new()
+	_eq(fd.region, Rect2(), "default region empty")
+	_eq(fd.duration, 1, "default duration 1")
+	fd.region = Rect2(0, 0, 64, 64)
+	fd.duration = 3
+	_eq(fd.region, Rect2(0, 0, 64, 64), "region set")
+	_eq(fd.duration, 3, "duration set")
+
+
+func _test_animation_data_resource() -> void:
+	_begin("AnimationData: frames + total")
+	var anim = P_AnimData.new()
+	anim.anim_name = "slash"
+	anim.fps = 12
+	var f1 = P_FrameData.new(); f1.duration = 2; f1.region = Rect2(0, 0, 32, 32)
+	var f2 = P_FrameData.new(); f2.duration = 3; f2.region = Rect2(32, 0, 32, 32)
+	var f3 = P_FrameData.new(); f3.duration = 1; f3.region = Rect2(64, 0, 32, 32)
+	anim.frames = [f1, f2, f3]
+	_eq(anim.get_total_frames(), 6, "total=2+3+1=6")
+	_eq(anim.get_frame_at_index(0).region, Rect2(0, 0, 32, 32), "frame 0 = f1")
+	_eq(anim.get_frame_at_index(1).region, Rect2(0, 0, 32, 32), "frame 1 = f1")
+	_eq(anim.get_frame_at_index(2).region, Rect2(32, 0, 32, 32), "frame 2 = f2")
+	_eq(anim.get_frame_at_index(4).region, Rect2(32, 0, 32, 32), "frame 4 = f2")
+	_eq(anim.get_frame_at_index(5).region, Rect2(64, 0, 32, 32), "frame 5 = f3")
+	_eq(anim.get_frame_at_index(99).region, Rect2(64, 0, 32, 32), "frame 99 = last")
+
+
+func _test_hitbox_data_resource() -> void:
+	_begin("HitboxData: create + levels")
+	var hd = P_HitboxData.new()
+	hd.shape_size = Vector2(50, 80)
+	hd.offset = Vector2(25, 0)
+	hd.hit_level = P_HitboxData.HitLevel.OVERHEAD
+	_eq(hd.shape_size, Vector2(50, 80), "shape")
+	_eq(hd.offset, Vector2(25, 0), "offset")
+	_eq(hd.hit_level, P_HitboxData.HitLevel.OVERHEAD, "overhead")
+
+
+func _test_frame_event_resource() -> void:
+	_begin("FrameEvent: create + types")
+	var ev = P_FrameEvent.new()
+	ev.frame = 5
+	ev.type = P_FrameEvent.EventType.PLAY_SOUND
+	ev.data = {"audio": "slash.ogg"}
+	_eq(ev.frame, 5, "frame=5")
+	_eq(ev.type, P_FrameEvent.EventType.PLAY_SOUND, "PLAY_SOUND")
+	_eq(ev.data.get("audio"), "slash.ogg", "audio param")
+
+
+func _test_attack_phase_resource() -> void:
+	_begin("AttackPhase: contains_frame")
+	var phase = P_AttackPhase.new()
+	phase.start_frame = 3
+	phase.end_frame = 7
+	_ok(not phase.contains_frame(2), "frame 2 out")
+	_ok(phase.contains_frame(3), "frame 3 in")
+	_ok(phase.contains_frame(5), "frame 5 in")
+	_ok(phase.contains_frame(7), "frame 7 in")
+	_ok(not phase.contains_frame(8), "frame 8 out")
+
+
+func _test_movement_phase_resource() -> void:
+	_begin("MovementPhase: contains_frame + velocity")
+	var mp = P_MovementPhase.new()
+	mp.start_frame = 1
+	mp.end_frame = 4
+	mp.velocity = Vector2(5, 0)
+	_ok(mp.contains_frame(2), "frame 2 in")
+	_ok(not mp.contains_frame(5), "frame 5 out")
+	_eq(mp.velocity, Vector2(5, 0), "velocity")
+
+
+func _test_skill_data_v2_resource() -> void:
+	_begin("SkillDataV2: create with phases")
+	var skill = _mk_test_skill()
+	_eq(skill.skill_name, "test_slash", "name")
+	_eq(skill.phases.size(), 1, "1 phase")
+	_eq(skill.events.size(), 1, "1 event")
+	_eq(skill.movement.size(), 1, "1 movement")
+	_eq(skill.get_total_frames(), 6, "total frames from anim")
+
+
+func _test_skill_data_v2_phase_query() -> void:
+	_begin("SkillDataV2: phase query by frame")
+	var skill = _mk_test_skill()
+	_eq(skill.get_phases_at_frame(2).size(), 0, "frame 2 no phase")
+	_eq(skill.get_phases_at_frame(3).size(), 1, "frame 3 has phase")
+	_eq(skill.get_phases_at_frame(5).size(), 1, "frame 5 has phase")
+	_eq(skill.get_movement_at_frame(1).size(), 1, "frame 1 has movement")
+	_eq(skill.get_movement_at_frame(4).size(), 0, "frame 4 no movement")
+
+
+func _test_skill_data_v2_event_query() -> void:
+	_begin("SkillDataV2: event query by frame")
+	var skill = _mk_test_skill()
+	_eq(skill.get_events_at_frame(2).size(), 1, "frame 2 has event")
+	_eq(skill.get_events_at_frame(0).size(), 0, "frame 0 no event")
+
+
+func _test_input_condition_resource() -> void:
+	_begin("InputCondition: equal check")
+	var cond = P_InputCondition.new()
+	cond.condition_type = P_InputCondition.ConditionType.EQUAL_CHECK
+	cond.input_name = "punch"
+	cond.input_value = true
+	_ok(cond.check_valid({"punch": true}), "punch=true passes")
+	_ok(not cond.check_valid({"punch": false}), "punch=false fails")
+	_ok(not cond.check_valid({"kick": true}), "missing key fails")
+
+
+func _test_character_stats_resource() -> void:
+	_begin("CharacterStats: defaults")
+	var stats = P_CharStats.new()
+	_eq(stats.max_hp, 1000, "hp=1000")
+	_eq(stats.max_mp, 500, "mp=500")
+	_eq(stats.strength, 100, "str=100")
+	_ok(stats.physical_crit > 0.0, "crit > 0")
+
+
+func _test_character_data_resource() -> void:
+	_begin("CharacterData: skill lookup")
+	var cd = P_CharData.new()
+	cd.character_name = "warrior"
+	var skill = _mk_test_skill()
+	cd.skills = [skill]
+	_eq(cd.get_skill_by_name("test_slash").skill_name, "test_slash", "found skill")
+	_eq(cd.get_skill_by_name("missing"), null, "not found returns null")
+
+
+func _test_frame_player_basic() -> void:
+	_begin("FramePlayer: play + tick")
+	var fp = P_FramePlayer.new()
+	add_child(fp)
+	var anim = _mk_test_anim()
+
+	# anim: f1(dur=2) f2(dur=3) f3(dur=1), total=6
+	fp.play(anim)
+	_ok(fp.is_playing(), "playing after play()")
+	_eq(fp.get_current_frame_index(), 0, "starts at 0")
+
+	fp.tick()  # timer=1 < dur=2 → stay at 0
+	_eq(fp.get_current_frame_index(), 0, "still 0 (duration=2)")
+	fp.tick()  # timer=2 >= dur=2 → advance to 1
+	_eq(fp.get_current_frame_index(), 1, "frame 1 (still f1 region)")
+	fp.tick()  # f_at(1)=f1(dur=2), timer=1 < 2
+	_eq(fp.get_current_frame_index(), 1, "still 1")
+	fp.tick()  # timer=2 >= 2 → advance to 2
+	_eq(fp.get_current_frame_index(), 2, "frame 2 (f2 region)")
+	for i in 3:  # f_at(2)=f2(dur=3), need 3 ticks to pass
+		fp.tick()
+	_eq(fp.get_current_frame_index(), 3, "frame 3 after f2 dur")
+	fp.tick()  # f_at(3)=f2(dur=3), timer=1
+	fp.tick()  # timer=2
+	fp.tick()  # timer=3 >= 3 → advance to 4
+	_eq(fp.get_current_frame_index(), 4, "frame 4")
+	fp.tick()  # f_at(4)=f2(dur=3), timer=1
+	fp.tick()  # timer=2
+	fp.tick()  # timer=3 >= 3 → advance to 5
+	_eq(fp.get_current_frame_index(), 5, "frame 5 (f3)")
+	fp.tick()  # f_at(5)=f3(dur=1), timer=1 >= 1 → advance to 6 → finished
+	_ok(not fp.is_playing(), "finished (no loop)")
+	fp.queue_free()
+
+
+func _test_frame_player_save_load() -> void:
+	_begin("FramePlayer: save/load state")
+	var fp = P_FramePlayer.new()
+	add_child(fp)
+	fp.play(_mk_test_anim())
+	fp.tick(); fp.tick()  # after 2 ticks: index=1
+	var state = fp._save_state()
+	_eq(state["fi"], 1, "saved frame=1")
+	_ok(state["pl"], "saved playing=true")
+
+	var fp2 = P_FramePlayer.new()
+	add_child(fp2)
+	fp2._load_state(state)
+	_eq(fp2.get_current_frame_index(), 1, "restored frame=1")
+	fp.queue_free(); fp2.queue_free()
+
+
+func _test_hitbox_component_basic() -> void:
+	_begin("HitboxComponent: set + clear")
+	var hc = P_HitboxComp.new()
+	add_child(hc)
+	var hd = P_HitboxData.new()
+	hd.shape_size = Vector2(40, 60)
+	hd.offset = Vector2(20, 0)
+	var hb := DNFHitBehavior.new()
+	hb.damage = 10
+
+	hc.set_hitbox(hd, hb)
+	_ok(hc.is_active(), "active after set")
+	_eq(hc.get_current_behavior().damage, 10, "behavior damage=10")
+
+	hc.clear_all()
+	_ok(not hc.is_active(), "inactive after clear")
+	hc.queue_free()
+
+
+func _test_skill_component_v2_basic() -> void:
+	_begin("SkillComponentV2: play_skill + tick")
+	var fp = P_FramePlayer.new()
+	add_child(fp)
+	var hc = P_HitboxComp.new()
+	add_child(hc)
+
+	var sc = P_SkillCompV2.new()
+	sc.frame_player_path = fp.get_path()
+	sc.hitbox_component_path = hc.get_path()
+	add_child(sc)
+
+	var skill = _mk_test_skill()
+	_ok(sc.play_skill(skill), "play_skill returns true")
+	_ok(sc.is_active(), "active after play")
+	_eq(sc.get_active_skill().skill_name, "test_slash", "active skill name")
+
+	for i in 3:
+		sc.tick()
+	_eq(sc.get_current_frame(), fp.get_current_frame_index(), "frame synced")
+
+	sc.interrupt()
+	_ok(not sc.is_active(), "inactive after interrupt")
+
+	fp.queue_free(); hc.queue_free(); sc.queue_free()
+
+
+# -- Phase 6 helpers --
+
+func _mk_test_anim():
+	var anim = P_AnimData.new()
+	anim.anim_name = "test_anim"
+	anim.fps = 12
+	var f1 = P_FrameData.new(); f1.duration = 2; f1.region = Rect2(0, 0, 32, 32)
+	var f2 = P_FrameData.new(); f2.duration = 3; f2.region = Rect2(32, 0, 32, 32)
+	var f3 = P_FrameData.new(); f3.duration = 1; f3.region = Rect2(64, 0, 32, 32)
+	anim.frames = [f1, f2, f3]
+	return anim
+
+
+func _mk_test_skill():
+	var skill = P_SkillDataV2.new()
+	skill.skill_name = "test_slash"
+	skill.display_name = "Test Slash"
+	skill.animation = _mk_test_anim()
+
+	var hd = P_HitboxData.new()
+	hd.shape_size = Vector2(50, 80)
+	hd.offset = Vector2(30, 0)
+
+	var hb := DNFHitBehavior.new()
+	hb.damage = 15
+
+	var phase = P_AttackPhase.new()
+	phase.start_frame = 3
+	phase.end_frame = 5
+	phase.hitbox = hd
+	phase.hit_behavior = hb
+	skill.phases = [phase]
+
+	var ev = P_FrameEvent.new()
+	ev.frame = 2
+	ev.type = P_FrameEvent.EventType.PLAY_SOUND
+	ev.data = {"audio": "slash.ogg"}
+	skill.events = [ev]
+
+	var mov = P_MovementPhase.new()
+	mov.start_frame = 1
+	mov.end_frame = 3
+	mov.velocity = Vector2(5, 0)
+	skill.movement = [mov]
+
+	return skill
