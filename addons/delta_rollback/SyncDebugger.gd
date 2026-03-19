@@ -86,7 +86,15 @@ func _on_SyncManager_tick_finished(is_rollback: bool) -> void:
 	pass
 
 func _unhandled_input(event: InputEvent) -> void:
-	var action_pressed = event.is_action_pressed("sync_debug")
+	var action_pressed = false
+	
+	# 安全地检查sync_debug动作
+	if InputMap.has_action("sync_debug"):
+		action_pressed = event.is_action_pressed("sync_debug")
+	
+	# 添加F11键作为备选
+	action_pressed = action_pressed or (event is InputEventKey and event.keycode == KEY_F11)
+	
 	if action_pressed:
 		if not _debug_pressed:
 			_debug_pressed = true

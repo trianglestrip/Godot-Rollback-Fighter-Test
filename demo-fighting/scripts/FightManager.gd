@@ -24,6 +24,11 @@ func _ready():
 	add_to_group("network_sync")
 
 func _network_process(input : Dictionary) -> void:
+	# 首先处理所有敌人AI
+	for ai in get_tree().get_nodes_in_group("enemy_ai"):
+		if ai.has_method("_network_process"):
+			ai._network_process()
+		
 	for fighter in get_tree().get_nodes_in_group("fighter"):
 		if fighter is Fighter:
 			fighter.sync_to_physics_engine()

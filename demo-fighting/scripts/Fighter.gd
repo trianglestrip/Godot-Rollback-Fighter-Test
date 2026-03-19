@@ -82,6 +82,19 @@ enum BlockType {NONE, HIGH, LOW}
 var current_anim_tick : int = 0
 @onready var current_anim : String = current_state.anim_name
 
+#Enemy related variables
+var is_enemy : bool = false
+
+func set_as_enemy():
+	is_enemy = true
+	remove_from_group("players")
+	add_to_group("enemies")
+	# 禁用玩家输入
+	input_prefix = "disabled"
+	
+	# 添加简单AI逻辑
+	add_child(preload("res://demo-fighting/scripts/EnemyAI.gd").new())
+
 func _ready():
 	add_to_group("network_sync")
 	add_to_group("fighter")
@@ -89,6 +102,10 @@ func _ready():
 	$Collision/Hurtboxes/StandHurtbox.activate_hurtbox()
 	default_pos_x = fixed_position_x
 	default_pos_y = fixed_position_y
+	
+	# 初始化为玩家
+	is_enemy = false
+	add_to_group("players")
 
 func _get_local_input() -> Dictionary:
 	
@@ -395,7 +412,7 @@ func get_hit():
 	
 	#lets go gambling
 	if block_type == BlockType.NONE:
-			blocked_all_hits = false #aw dangit
+		blocked_all_hits = false #aw dangit
 	for hitbox : Hitbox in hitboxes_hit:
 		if hitbox.hit_level == hitbox.HitLevel.UNBLOCKABLE:
 			blocked_all_hits = false #aw dangit
@@ -404,46 +421,69 @@ func get_hit():
 		elif hitbox.hit_level == hitbox.HitLevel.OVERHEAD and block_type == BlockType.LOW:
 			blocked_all_hits = false #aw dangit
 		
-	var final_hit_behavior : HitBehavior #determining which hit behavior to apply after various checks
-	var enemy : Fighter
+	# 处理多个命中的情况，选择最严重的hitbox效果
+	var final_hit_behavior : HitBehavior
+	var final_enemy : Fighter
 	var final_hitbox : Hitbox
-	for hitbox : Hitbox in hitboxes_hit:
-		hitbox.owner.move_has_hit = true
-		enemy = hitbox.fighter
-		var hitbox_index : int = enemy.active_hitboxes.find(hitbox, 0)
-		if hitbox_index != -1:
-			hitbox.owner.hit_tracker[hitbox_index] = true
+	
+	# 初始化最终效果为第一个命中的效果
+	if hitboxes_hit.size() > 0:
+		final_hitbox = hitboxes_hit[0]
+		final_enemy = final_hitbox.fighter
 		if !blocked_all_hits:
-			final_hit_behavior = hitbox.hit_behavior
-			final_hitbox = hitbox
+			final_hit_behavior = final_hitbox.hit_behavior
 		else:
-			final_hit_behavior = hitbox.block_behavior
-			final_hitbox = hitbox
+			final_hit_behavior = final_hitbox.block_behavior
 		if !grounded:
-			final_hit_behavior = hitbox.air_hit_behavior
-			final_hitbox = hitbox
+			final_hit_behavior = final_hitbox.air_hit_behavior
 		
-	#After the final hit behavior has been determined, we apply changes to the fighter
+		# 遍历所有命中的hitbox，选择伤害最高的
+		for hitbox : Hitbox in hitboxes_hit:
+			hitbox.owner.move_has_hit = true
+			var current_enemy = hitbox.fighter
+			var hitbox_index : int = current_enemy.active_hitboxes.find(hitbox, 0)
+			if hitbox_index != -1:
+				hitbox.owner.hit_tracker[hitbox_index] = true
 			
-	health -= final_hit_behavior.damage
-	if health > 0:
-		state_transition($States.find_child(final_hit_behavior.hit_state))
-	else:
-		state_transition($States/Knockout)
+			# 选择伤害最高的效果
+			var current_behavior : HitBehavior
+			if !blocked_all_hits:
+				current_behavior = hitbox.hit_behavior
+			else:
+				current_behavior = hitbox.block_behavior
+			if !grounded:
+				current_behavior = hitbox.air_hit_behavior
+			
+			if current_behavior.damage > final_hit_behavior.damage:
+				final_hit_behavior = current_behavior
+				final_hitbox = hitbox
+				final_enemy = current_enemy
 		
-	for variable in final_hit_behavior.new_variables.keys():
-		set(variable, final_hit_behavior.new_variables[variable])
+		#After the final hit behavior has been determined, we apply changes to the fighter
+		            
+		health -= final_hit_behavior.damage
+		if health > 0:
+			state_transition($States.find_child(final_hit_behavior.hit_state))
+		else:
+			state_transition($States/Knockout)
+			
+		for variable in final_hit_behavior.new_variables.keys():
+			set(variable, final_hit_behavior.new_variables[variable])
+			
+		var side_multiplier : int = 1
+		if facing_right == false:
+			side_multiplier = -1
+		final_enemy.fixed_position_x += final_hit_behavior.self_knockback * side_multiplier
+		final_enemy.sync_to_physics_engine()
+		if final_hitbox.owner == final_enemy:
+			final_enemy.hitstop = final_hit_behavior.hitstop
+		hitstop = final_hit_behavior.hitstop
 		
-	var side_multiplier : int = 1
-	if facing_right == false:
-		side_multiplier = -1
-	enemy.fixed_position_x += final_hit_behavior.self_knockback * side_multiplier
-	enemy.sync_to_physics_engine()
-	if final_hitbox.owner == enemy:
-		enemy.hitstop = final_hit_behavior.hitstop
-	hitstop = final_hit_behavior.hitstop
-	SyncManager.spawn("HitEffect", spawn_parent, final_hit_behavior.hit_effect, {position = final_hitbox.global_position})
-	SyncManager.play_sound(name + "Sound", final_hit_behavior.sound)
+		# 使用get_node获取SyncManager，而不是直接引用
+		var sync_manager = get_tree().get_root().get_node_or_null("SyncManager")
+		if sync_manager:
+			sync_manager.spawn("HitEffect", spawn_parent, final_hit_behavior.hit_effect, {position = final_hitbox.global_position})
+			sync_manager.play_sound(name + "Sound", final_hit_behavior.sound)
 	hitboxes_hit.clear()
 
 #Changing visuals that aren't tied to any game state logic in the _process()

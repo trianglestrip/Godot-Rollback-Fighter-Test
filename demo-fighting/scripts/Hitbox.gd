@@ -19,11 +19,11 @@ func hitbox_process():
 	sync_to_physics_engine()
 	for area : SGArea2D in get_overlapping_areas():
 		if area is Hurtbox:
-			var enemy = area.owner
-			if enemy != fighter and enemy is Fighter and enemy.active_hurtboxes.has(area):
+			var target = area.owner
+			if target != fighter and target is Fighter and target.active_hurtboxes.has(area):
 				var index : int = owner.active_hitboxes.find(self, 0)
 				if !owner.hit_tracker[index]:
-					enemy.hitboxes_collided.append(self)
+					target.hitboxes_collided.append(self)
 
 func activate_hitbox():
 	if !owner.active_hitboxes.has(self):

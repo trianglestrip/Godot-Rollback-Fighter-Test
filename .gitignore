@@ -1,10 +1,14 @@
 # Godot 4+ specific ignores
 .godot/
+*.godot*
 
 # Godot-specific ignores
 .import/
 export.cfg
 export_presets.cfg
+*.uid
+*.tscn.tres
+*.scn.tres
 
 # Imported translations (automatically generated from CSV files)
 *.translation
@@ -13,3 +17,38 @@ export_presets.cfg
 .mono/
 data_*/
 mono_crash.*.json
+
+# Editor directories and files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Compiled binaries
+bin/*
+!bin/delta_rollback.gdextension
+!bin/libdelta_rollback.*
+sg-physics-2d/lib/*
+!sg-physics-2d/lib/sg-physics-2d.gdextension
+!sg-physics-2d/lib/libsgphysics2d.*
+
+# Auto-generated files
+*.tmp
+*.TMP
+
+# Test and script files
+test_*.gd
+verify_*.ps1
+run_test.bat
+auto_test.ps1
+plan.md

@@ -21,7 +21,7 @@ config/icon="res://icon.svg"
 
 [autoload]
 
-SyncManager="*res://addons/delta_rollback/SyncManager.gd"
+SyncManager="*uid://veey81akvb6b"
 SyncReplay="*res://addons/delta_rollback/SyncReplay.gd"
 MCPGameBridge="res://addons/godot_mcp/game_bridge/mcp_game_bridge.gd"
 

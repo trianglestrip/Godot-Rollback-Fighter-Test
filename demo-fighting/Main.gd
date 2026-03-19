@@ -30,6 +30,9 @@ func _ready() -> void:
 	$ServerPlayer.spawn_parent = $SpawnParent
 	$ClientPlayer.spawn_parent = $SpawnParent
 
+	# 添加EnemyAI到ClientPlayer节点上，让右侧角色能够自动AI移动
+	_add_enemy_ai_to_client_player()
+
 	var cmdline_args = OS.get_cmdline_args()
 	if "server" in cmdline_args:
 		_on_ServerButton_pressed()
@@ -40,6 +43,26 @@ func _ready() -> void:
 		main_menu.visible = false
 		connection_panel.visible = false
 		reset_button.visible = false
+
+func _add_enemy_ai_to_client_player() -> void:
+	# 检查是否已经有EnemyAI节点
+	var enemy_ai = $ClientPlayer.get_node_or_null("EnemyAI")
+	if enemy_ai:
+		return
+	
+	# 加载EnemyAI脚本
+	var enemy_ai_script = load("res://demo-fighting/scripts/EnemyAI.gd")
+	if not enemy_ai_script:
+		return
+	
+	# 创建EnemyAI节点并添加到ClientPlayer上
+	var ai_node = Node.new()
+	ai_node.name = "EnemyAI"
+	ai_node.script = enemy_ai_script
+	$ClientPlayer.add_child(ai_node)
+	
+	print("已成功将EnemyAI添加到ClientPlayer节点上")
+	print("右侧角色现在将自动AI移动")
 
 func _on_OnlineButton_pressed() -> void:
 	connection_panel.popup_centered()
