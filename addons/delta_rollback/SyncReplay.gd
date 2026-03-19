@@ -1,6 +1,6 @@
 extends Node
 
-const Logger = preload("res://addons/delta_rollback/Logger.gd")
+const DeltaLogger = preload("res://addons/delta_rollback/DeltaLogger.gd")
 const DummyNetworkAdaptor = preload("res://addons/delta_rollback/DummyNetworkAdaptor.gd")
 
 const GAME_PORT_SETTING = 'network/rollback/log_inspector/replay_port'
@@ -148,13 +148,13 @@ func _do_execute_frame(msg: Dictionary) -> void:
 	SyncManager.mechanized_rollback_ticks = rollback_ticks
 	
 	match frame_type:
-		Logger.FrameType.TICK:
+		DeltaLogger.FrameType.TICK:
 			SyncManager.execute_mechanized_tick()
 		
-		Logger.FrameType.INTERPOLATION_FRAME:
+		DeltaLogger.FrameType.INTERPOLATION_FRAME:
 			SyncManager.execute_mechanized_interpolation_frame(msg['delta'])
 		
-		Logger.FrameType.INTERFRAME:
+		DeltaLogger.FrameType.INTERFRAME:
 			SyncManager.execute_mechanized_interframe()
 		
 		_:

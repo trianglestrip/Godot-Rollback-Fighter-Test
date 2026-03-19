@@ -6,7 +6,7 @@ const SpawnManager = preload("res://addons/delta_rollback/SpawnManager.gd")
 const SoundManager = preload("res://addons/delta_rollback/SoundManager.gd")
 const NetworkAdaptor = preload("res://addons/delta_rollback/NetworkAdaptor.gd")
 const MessageSerializer = preload("res://addons/delta_rollback/MessageSerializer.gd")
-const Logger = preload("res://addons/delta_rollback/Logger.gd")
+const DeltaLogger = preload("res://addons/delta_rollback/DeltaLogger.gd")
 const DebugStateComparer = preload("res://addons/delta_rollback/DebugStateComparer.gd")
 
 class Peer extends RefCounted:
@@ -417,7 +417,7 @@ func start_logging(log_file_path: String, match_info: Dictionary = {}) -> void:
 		return
 	
 	if not _logger:
-		_logger = Logger.new(self)
+		_logger = DeltaLogger.new(self)
 	else:
 		_logger.stop()
 	
@@ -1090,7 +1090,7 @@ func _physics_process(_delta: float) -> void:
 				# Even when we're skipping ticks, still send input.
 				_send_input_messages_to_all_peers()
 				if _logger:
-					_logger.skip_tick(Logger.SkipReason.INPUT_BUFFER_UNDERRUN, start_time)
+					_logger.skip_tick(DeltaLogger.SkipReason.INPUT_BUFFER_UNDERRUN, start_time)
 				return
 			
 			# Check if our max lag is still greater than the min lag to regain sync.
@@ -1099,7 +1099,7 @@ func _physics_process(_delta: float) -> void:
 				# Even when we're skipping ticks, still send input.
 				_send_input_messages_to_all_peers()
 				if _logger:
-					_logger.skip_tick(Logger.SkipReason.WAITING_TO_REGAIN_SYNC, start_time)
+					_logger.skip_tick(DeltaLogger.SkipReason.WAITING_TO_REGAIN_SYNC, start_time)
 				return
 			
 			# If we've reach this point, that means we've regained sync!
@@ -1120,7 +1120,7 @@ func _physics_process(_delta: float) -> void:
 			# Even when we're skipping ticks, still send input.
 			_send_input_messages_to_all_peers()
 			if _logger:
-				_logger.skip_tick(Logger.SkipReason.INPUT_BUFFER_UNDERRUN, start_time)
+				_logger.skip_tick(DeltaLogger.SkipReason.INPUT_BUFFER_UNDERRUN, start_time)
 			return
 		
 		if skip_ticks > 0:
@@ -1132,13 +1132,13 @@ func _physics_process(_delta: float) -> void:
 				# Even when we're skipping ticks, still send input.
 				_send_input_messages_to_all_peers()
 				if _logger:
-					_logger.skip_tick(Logger.SkipReason.ADVANTAGE_ADJUSTMENT, start_time)
+					_logger.skip_tick(DeltaLogger.SkipReason.ADVANTAGE_ADJUSTMENT, start_time)
 				return
 		
 		if _calculate_skip_ticks():
 			# This means we need to skip some ticks, so may as well start now!
 			if _logger:
-				_logger.skip_tick(Logger.SkipReason.ADVANTAGE_ADJUSTMENT, start_time)
+				_logger.skip_tick(DeltaLogger.SkipReason.ADVANTAGE_ADJUSTMENT, start_time)
 			return
 	else:
 		_cleanup_buffers()

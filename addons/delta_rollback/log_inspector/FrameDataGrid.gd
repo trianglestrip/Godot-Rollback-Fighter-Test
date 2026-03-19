@@ -1,7 +1,7 @@
 @tool
 extends Tree
 
-const Logger = preload("res://addons/delta_rollback/Logger.gd")
+const DeltaLogger = preload("res://addons/delta_rollback/DeltaLogger.gd")
 const LogData = preload("res://addons/delta_rollback/log_inspector/LogData.gd")
 
 var log_data: LogData
@@ -27,7 +27,7 @@ func set_cursor_time(_cursor_time: int) -> void:
 func _ready() -> void:
 	_property_definitions['frame_type'] = {
 		type = PropertyType.ENUM,
-		values = Logger.FrameType.keys(),
+		values = DeltaLogger.FrameType.keys(),
 	}
 	_property_definitions['tick'] = {}
 	_property_definitions['input_tick'] = {}
@@ -39,7 +39,7 @@ func _ready() -> void:
 	_property_definitions['skipped'] = {}
 	_property_definitions['skip_reason'] = {
 		type = PropertyType.ENUM,
-		values = Logger.SkipReason.keys(),
+		values = DeltaLogger.SkipReason.keys()
 	}
 	_property_definitions['buffer_underrun_message'] = {}
 	_property_definitions['start_time'] = {

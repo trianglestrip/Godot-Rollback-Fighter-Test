@@ -1,4 +1,4 @@
-extends Reference
+extends RefCounted
 
 var start_timings := {}
 var timings := {}
