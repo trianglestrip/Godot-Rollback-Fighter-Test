@@ -1,4 +1,4 @@
-@icon("res://addons/frame_based_lib/frame_based_character_2D/icon.svg")
+@icon("res://addons/frame_based_lib/frame_based_character_body_2d/icon.svg")
 extends CharacterBody2D
 
 class_name FrameBasedCharacterBody2D
