@@ -71,62 +71,66 @@ SkillData {
 ### 3.1 FrameData（纯显示帧）
 
 ```gdscript
-class_name FrameData extends Resource
+class_name DNFFrameData extends Resource
 
 @export var region: Rect2        # Atlas 切片区域
-@export var duration: int = 1    # 持续帧数（通常 1）
+@export var duration: int = 1    # 持续帧数
+@export var anchor_offset: Vector2 = Vector2.ZERO  # 锚点偏移
 ```
 
 ### 3.2 AnimationData（帧动画）
 
 ```gdscript
-class_name AnimationData extends Resource
+class_name DNFAnimationData extends Resource
 
 @export var anim_name: String
 @export var fps: int = 12
-@export var frames: Array[FrameData]
+@export var frames: Array       # DNFFrameData
 @export var loop: bool = false
+@export var atlas: Texture2D
 ```
 
 ### 3.3 AttackPhase（攻击区间 — 核心）
 
 ```gdscript
-class_name AttackPhase extends Resource
+class_name DNFAttackPhase extends Resource
 
 @export var start_frame: int = 0
 @export var end_frame: int = 5
-@export var hitbox: HitboxData         # 该区间的碰撞体
-@export var hit_behavior: HitBehavior  # 该区间的受击行为
-@export var events: Array[FrameEvent]  # 区间内触发的事件
+@export var hitbox: Resource         # DNFHitboxData
+@export var hit_behavior: Resource   # DNFHitBehavior
+@export var events: Array            # DNFFrameEvent
 ```
 
 ### 3.4 HitboxData（碰撞体数据）
 
 ```gdscript
-class_name HitboxData extends Resource
+class_name DNFHitboxData extends Resource
 
-@export var shape: Vector2       # 碰撞体尺寸
-@export var offset: Vector2      # 相对角色原点偏移
-@export var hit_level: HitLevel  # MID/LOW/OVERHEAD/UNBLOCKABLE
+enum HitLevel { MID, LOW, OVERHEAD, UNBLOCKABLE }
+
+@export var shape_size: Vector2 = Vector2(40, 60)
+@export var offset: Vector2 = Vector2(30, 0)
+@export var hit_level: HitLevel = HitLevel.MID
 ```
 
 ### 3.5 MovementPhase（位移区间）
 
 ```gdscript
-class_name MovementPhase extends Resource
+class_name DNFMovementPhase extends Resource
 
 @export var start_frame: int = 0
 @export var end_frame: int = 5
-@export var velocity: Vector2           # 位移速度
+@export var velocity: Vector2 = Vector2.ZERO
 @export var relative_to_facing: bool = true
 ```
 
 ### 3.6 FrameEvent（单帧事件）
 
 ```gdscript
-class_name FrameEvent extends Resource
+class_name DNFFrameEvent extends Resource
 
-enum Type {
+enum EventType {
     SPAWN_EFFECT, PLAY_SOUND, CAMERA_SHAKE, SPAWN_PROJECTILE,
     APPLY_BUFF, SUPER_ARMOR_START, SUPER_ARMOR_END,
     INVINCIBLE_START, INVINCIBLE_END,
@@ -134,60 +138,60 @@ enum Type {
     CUSTOM_SIGNAL
 }
 
-@export var frame: int           # 触发帧
-@export var type: Type
-@export var data: Dictionary     # 事件参数
+@export var frame: int
+@export var type: EventType
+@export var data: Dictionary
 ```
 
-### 3.7 SkillData（技能定义 — 核心）
+### 3.7 SkillDataV2（技能定义 — 核心）
 
 ```gdscript
-class_name SkillData extends Resource
+class_name DNFSkillDataV2 extends Resource
+
+enum DamageType { PHYSICAL_PERCENT, MAGICAL_PERCENT, INDEPENDENT }
+enum Element { NEUTRAL, FIRE, ICE, LIGHT, DARK }
+enum SuperArmorLevel { NONE, LIGHT, HEAVY, FULL }
 
 @export var skill_name: String
 @export var display_name: String
-@export var animation: AnimationData     # 引用帧动画
+@export var animation: Resource      # DNFAnimationData
 
-# 攻击区间（核心逻辑层）
-@export var phases: Array[AttackPhase]
-@export var events: Array[FrameEvent]    # 单帧事件
-@export var movement: Array[MovementPhase]  # 位移区间
+@export var phases: Array            # DNFAttackPhase
+@export var events: Array            # DNFFrameEvent
+@export var movement: Array          # DNFMovementPhase
 
-# 消耗
 @export var mp_cost: int = 0
 @export var hp_cost: int = 0
 @export var cooldown_frames: int = 0
 
-# 属性
 @export var damage_type: DamageType
 @export var element: Element
 @export var skill_coefficient: float = 1.0
-@export var super_armor_level: SuperArmorLevel = SuperArmorLevel.NONE
+@export var super_armor_level: SuperArmorLevel
 
-# 取消系统
 @export var cancelable: bool = false
 @export var cancel_into: Array[String]
 
-# 条件
 @export var ground_only: bool = true
 @export var air_usable: bool = false
 @export var priority: int = 0
+@export var input_conditions: Array  # DNFInputCondition
 
-# UI
-@export var ui: SkillUIData
-@export var input_conditions: Array[InputCondition]
+@export var ui: Resource             # DNFSkillUIData
 ```
 
 ### 3.8 CharacterData（角色总入口）
 
 ```gdscript
-class_name CharacterData extends Resource
+class_name DNFCharacterData extends Resource
 
 @export var character_name: String
+@export var display_name: String
 @export var atlas: Texture2D
-@export var animations: Dictionary  # String → AnimationData
-@export var skills: Array[SkillData]
-@export var stats: CharacterStats
+@export var portrait: Texture2D
+@export var animations: Dictionary   # String → DNFAnimationData
+@export var skills: Array            # DNFSkillDataV2
+@export var stats: Resource          # DNFCharacterStats
 ```
 
 ---
@@ -197,26 +201,23 @@ class_name CharacterData extends Resource
 ### 4.1 FramePlayer（只管播放动画帧）
 
 ```gdscript
-func play(anim: AnimationData):
+func play(anim: Resource):   # DNFAnimationData
     _anim = anim
     _frame_index = 0
     _frame_timer = 0
 
 func tick():
     _frame_timer += 1
-    var f = _anim.frames[_frame_index]
+    var f = _anim.get_frame_at_index(_frame_index)
     if _frame_timer >= f.duration:
         _frame_timer = 0
         _frame_index += 1
-    apply_display(f)  # 只设 sprite.region_rect
-
-func apply_display(f: FrameData):
-    sprite.region_rect = f.region
+    apply_display(f)
 ```
 
 **FramePlayer 只管显示，不管逻辑。**
 
-### 4.2 SkillComponent（管逻辑：Phase 匹配）
+### 4.2 SkillComponentV2（管逻辑：Phase 匹配）
 
 ```gdscript
 func tick():
@@ -225,31 +226,27 @@ func tick():
 
     # 匹配攻击区间
     for phase in active_skill.phases:
-        if frame >= phase.start_frame and frame <= phase.end_frame:
+        if phase.contains_frame(frame):
             hitbox_component.set_hitbox(phase.hitbox, phase.hit_behavior)
-        else:
-            hitbox_component.clear_phase_hitbox(phase)
 
     # 匹配位移区间
     for mov in active_skill.movement:
-        if frame >= mov.start_frame and frame <= mov.end_frame:
+        if mov.contains_frame(frame):
             apply_movement(mov)
 
     # 触发单帧事件
-    for ev in active_skill.events:
-        if ev.frame == frame:
-            execute_event(ev)
+    for ev in active_skill.get_events_at_frame(frame):
+        execute_event(ev)
 ```
 
 ### 4.3 HitboxComponent（运行时碰撞体管理）
 
 ```gdscript
-func set_hitbox(hitbox_data: HitboxData, behavior: HitBehavior):
+func set_hitbox(hitbox_data: Resource, behavior: Resource):
     # 动态创建/更新 Area2D + CollisionShape2D
-    # 不再依赖场景中的固定节点
 
-func clear_phase_hitbox(phase: AttackPhase):
-    # 清除该 phase 对应的碰撞体
+func clear_all():
+    # 清除碰撞体
 ```
 
 ---
@@ -291,10 +288,9 @@ func clear_phase_hitbox(phase: AttackPhase):
 在 Sprite 预览窗口中：
 ```gdscript
 func _draw():
-    # 当前帧在哪个 AttackPhase 区间内？
     for phase in skill.phases:
         if current_frame >= phase.start_frame and current_frame <= phase.end_frame:
-            var rect = Rect2(phase.hitbox.offset, phase.hitbox.shape)
+            var rect = Rect2(phase.hitbox.offset, phase.hitbox.shape_size)
             draw_rect(rect, Color.RED, false, 2.0)
 ```
 
@@ -384,7 +380,7 @@ addons/dnf_framework/
 │   │   ├── damage_calculator.gd
 │   │   └── super_armor.gd
 │   ├── skill/
-│   │   └── skill_component.gd       # 技能执行（Phase 匹配）
+│   │   └── skill_component_v2.gd    # 技能执行（Phase 匹配）
 │   ├── buff/
 │   │   └── buff_component.gd
 │   ├── stats/
@@ -398,15 +394,14 @@ addons/dnf_framework/
 │   │   ├── animation_data.gd        # 帧序列
 │   │   └── frame_data.gd            # 单帧（纯显示：region + duration）
 │   ├── skill/
-│   │   ├── skill_data.gd            # 技能（含 phases + events + movement）
+│   │   ├── skill_data_v2.gd         # 技能（含 phases + events + movement）
 │   │   ├── attack_phase.gd          # 攻击区间 ★ 核心
 │   │   ├── movement_phase.gd        # 位移区间
 │   │   ├── frame_event.gd           # 单帧事件
 │   │   ├── skill_ui_data.gd
 │   │   └── input_condition.gd
 │   ├── combat/
-│   │   ├── hitbox_data.gd           # 碰撞体数据
-│   │   └── hit_behavior.gd
+│   │   └── hitbox_data.gd           # 碰撞体数据
 │   ├── character/
 │   │   ├── character_data.gd        # 角色总入口
 │   │   └── character_stats.gd
@@ -448,37 +443,89 @@ addons/dnf_framework/
 
 ## 九、分阶段开发路线
 
-### Phase 6: 核心数据层 + FramePlayer + Phase 系统
+### Phase 1-5: 基础框架 ✅ 已完成
 
-1. FrameData（纯显示）+ AnimationData
-2. AttackPhase + MovementPhase + FrameEvent
-3. HitboxData + HitBehavior 扩充
-4. SkillData（含 phases/events/movement）
-5. FramePlayer（只管显示）
-6. SkillComponent（Phase 匹配逻辑）
-7. HitboxComponent（运行时碰撞体管理）
-8. CharacterData
-9. 目录迁移 + 兼容
-10. 测试 + 示例
+- ✅ InputBuffer（帧输入缓冲 + 连招检测）
+- ✅ FrameAnimationPlayer（帧动画播放器）
+- ✅ FrameCharacterBody2D（帧驱动物理角色）
+- ✅ DNFStates + DNFCharacter（状态机 + 角色基类）
+- ✅ DNFHitbox / DNFHurtbox / DNFHitBehavior / DNFCombatManager（战斗系统）
+- ✅ DNFMove + DNFInputType（招式系统 + 取消系统）
+- ✅ Phase 1-5 示例 + 152 项测试全部通过
 
-### Phase 7: 属性系统 + 伤害公式
+### Phase 6: 核心数据层 + FramePlayer + Phase 系统 ✅ 已完成
 
-### Phase 8: Buff/Debuff + 状态异常
+- ✅ 6.1 Resource 数据层
+  - ✅ `resources/animation/frame_data.gd` — DNFFrameData
+  - ✅ `resources/animation/animation_data.gd` — DNFAnimationData
+  - ✅ `resources/skill/attack_phase.gd` — DNFAttackPhase
+  - ✅ `resources/skill/movement_phase.gd` — DNFMovementPhase
+  - ✅ `resources/skill/frame_event.gd` — DNFFrameEvent（12 种事件类型）
+  - ✅ `resources/combat/hitbox_data.gd` — DNFHitboxData
+- ✅ 6.2 SkillDataV2 重写
+  - ✅ `resources/skill/skill_data_v2.gd` — DNFSkillDataV2
+  - ✅ `resources/skill/skill_ui_data.gd` — DNFSkillUIData
+  - ✅ `resources/skill/input_condition.gd` — DNFInputCondition
+- ✅ 6.3 运行时组件
+  - ✅ `runtime/frame/frame_player.gd` — DNFFramePlayer
+  - ✅ `runtime/combat/hitbox_component.gd` — DNFHitboxComponent
+  - ✅ `runtime/combat/hurtbox_component.gd` — DNFHurtboxComponent
+  - ✅ `runtime/skill/skill_component_v2.gd` — DNFSkillComponentV2
+- ✅ 6.4 CharacterData
+  - ✅ `resources/character/character_data.gd` — DNFCharacterData
+  - ✅ `resources/character/character_stats.gd` — DNFCharacterStats（28 项 DNF 属性）
+- ✅ 6.5 plugin.gd 更新 + 测试 + 中文文档注释
+  - ✅ plugin.gd 注册 4 个新自定义类型
+  - ✅ Phase6_DataLayer 测试套件（67 项测试）
+  - ✅ 全部 219/219 测试通过
+  - ✅ 所有 Resource 属性添加中文 `##` 文档注释
+  - ✅ CONFIGURATOR_GUIDE.md 配置器使用指南
+- ⚠️ 6.5 部分未完成
+  - ❌ 6.5.2 迁移保留模块到 runtime/（InputBuffer / FrameCharacterBody2D / DNFStates / DNFCharacter / CombatManager 仍在旧目录）
+  - ❌ 6.5.3 更新所有 preload/extends 路径
+  - ❌ 6.5.6 创建新示例（基于 SkillDataV2 + Phase 配置的 .tres 示例）
+- ❌ 6.1.7 HitBehavior 扩充（damage_type/element/skill_coefficient/fixed_damage 未加入 hit_behavior.gd）
 
-### Phase 9: 技能深化 + 霸体 + 格挡/抓取
+### Phase 7: 属性系统 + 伤害公式 ⬚ 未开始
 
-### Phase 10: 编辑器 — Timeline + PhaseTrack + Hitbox Preview
+- ❌ 7.1 CharacterStats Resource（✅ 已在 Phase 6.4 提前完成）
+- ❌ 7.2 `resources/stats/stat_modifier.gd` — 属性修正器
+- ❌ 7.3 `resources/stats/element_system.gd` — 属性克制
+- ❌ 7.4 `runtime/combat/damage_calculator.gd` — 伤害公式
+- ❌ 7.5 `runtime/stats/stats_component.gd` — 属性计算组件
+- ❌ 7.6 重构 DNFCharacter 集成 CharacterStats
+- ❌ 7.7 重构 CombatManager 使用 DamageCalculator
+- ❌ 7.8 扩充 DNFStates（+DEAD/GRAB/GRABBED/CHANNELING/CHARGING/STUNNED/FROZEN/PETRIFIED）
+- ❌ 7.9 测试 + 示例
 
-1. TimelineRoot + FrameRuler
-2. PhaseTrack（拖拽创建/调整攻击区间）
-3. EventTrack（点击添加事件）
-4. MovementTrack + ArmorTrack
-5. HitboxPreview（Sprite 上画框）
-6. SpritePreview（帧预览）
+### Phase 8: Buff/Debuff + 状态异常 ⬚ 未开始
 
-### Phase 11: 编辑器 — Skill + Character Editor
+- ❌ 8.1 `resources/buff/buff_data.gd`
+- ❌ 8.2 `resources/buff/buff_effect.gd` + stat/dot/cc 子类
+- ❌ 8.3 `runtime/buff/buff_component.gd`
+- ❌ 8.4 DNFCharacter 集成 BuffComponent
+- ❌ 8.5 测试 + 示例
 
-### Phase 12: 敌人 AI + 集成示例
+### Phase 9: 技能深化 + 霸体 + 格挡/抓取 ⬚ 未开始
+
+- ❌ 9.1 `runtime/combat/super_armor.gd`
+- ❌ 9.2 格挡系统（BLOCK + guard_break）
+- ❌ 9.3 抓取系统（GRAB/GRABBED + 解除）
+- ❌ 9.4 蓄力/持续释放（CHARGING/CHANNELING）
+- ❌ 9.5 被动技能（passive_manager）
+- ❌ 9.6 测试 + 示例
+
+### Phase 10: 编辑器 — Timeline + Phase Editor + Hitbox Preview ⬚ 未开始
+
+- ❌ 10.1-10.12（详见 task.md）
+
+### Phase 11: 编辑器 — Skill + Character Editor ⬚ 未开始
+
+- ❌ 11.1-11.4（详见 task.md）
+
+### Phase 12: 敌人 AI + 集成示例 ⬚ 未开始
+
+- ❌ 12.1-12.7（详见 task.md）
 
 ---
 
@@ -512,8 +559,8 @@ editor/    = @tool 编辑器代码
 
 ### 5. 解耦
 ```
-FramePlayer（显示）≠ SkillComponent（逻辑）
-SkillData（数据）≠ HitboxComponent（运行时）
+FramePlayer（显示）≠ SkillComponentV2（逻辑）
+SkillDataV2（数据）≠ HitboxComponent（运行时）
 ```
 
 ### 6. Rollback-friendly
@@ -531,6 +578,7 @@ SkillData（数据）≠ HitboxComponent（运行时）
 | 用 AnimationPlayer | 无法帧精确控制 | FramePlayer + AnimationData |
 | Hitbox 写死在场景 | 无法按区间切换 | HitboxData + HitboxComponent 运行时管理 |
 | 不做 Resource | 无法编辑器化 | 一切配置 = Resource |
-| Skill 和 Move 分两套 | 概念混乱 | 统一为 SkillData |
+| Skill 和 Move 分两套 | 概念混乱 | 统一为 SkillDataV2 |
 | FrameData 放逻辑 | 显示和逻辑耦合 | FrameData 纯显示，逻辑在 SkillData |
 | Timeline 做成动画编辑器 | 方向错误 | Timeline = 技能逻辑编辑器 |
+| Godot 4 typed array 跨脚本 | headless 模式 class_name 查找失败 | Resource 中用 untyped Array + 注释标注类型 |
