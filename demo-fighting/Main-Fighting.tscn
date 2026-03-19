@@ -1,14 +1,23 @@
-[gd_scene load_steps=16 format=3 uid="uid://bnjcpqgueo6s5"]
+[gd_scene format=3 uid="uid://bnjcpqgueo6s5"]
 
-[ext_resource type="Script" path="res://demo-fighting/Main.gd" id="1_adh32"]
+[ext_resource type="Script" uid="uid://vauj5mqfebu0" path="res://demo-fighting/Main.gd" id="1_adh32"]
 [ext_resource type="FontFile" uid="uid://va7ac8iahrws" path="res://assets/monogram_extended.ttf" id="2_dfey0"]
-[ext_resource type="Script" path="res://demo-fighting/scripts/FightManager.gd" id="3_yyshs"]
-[ext_resource type="Script" path="res://addons/delta_rollback/NetworkTimer.gd" id="4_0f5y5"]
+[ext_resource type="Script" uid="uid://intejeu63527" path="res://demo-fighting/scripts/FightManager.gd" id="3_yyshs"]
+[ext_resource type="Script" uid="uid://b4u2wfjkeqnop" path="res://addons/delta_rollback/NetworkTimer.gd" id="4_0f5y5"]
 [ext_resource type="PackedScene" uid="uid://b8j8obrvlqulg" path="res://demo-fighting/fighter.tscn" id="4_2ampb"]
 [ext_resource type="Texture2D" uid="uid://y2qiqet2veue" path="res://assets/godot.png" id="5_ymjv0"]
 
 [sub_resource type="FontFile" id="1"]
 fallbacks = Array[Font]([ExtResource("2_dfey0")])
+cache/0/variation_coordinates = {}
+cache/0/face_index = 0
+cache/0/embolden = 0.0
+cache/0/transform = Transform2D(1, 0, 0, 1, 0, 0)
+cache/0/spacing_top = 0
+cache/0/spacing_bottom = 0
+cache/0/spacing_space = 0
+cache/0/spacing_glyph = 0
+cache/0/baseline_offset = 0.0
 cache/0/16/0/ascent = 0.0
 cache/0/16/0/descent = 0.0
 cache/0/16/0/underline_position = 0.0
@@ -18,6 +27,15 @@ cache/0/16/0/kerning_overrides/16/0 = Vector2(0, 0)
 
 [sub_resource type="FontFile" id="2"]
 fallbacks = Array[Font]([ExtResource("2_dfey0")])
+cache/0/variation_coordinates = {}
+cache/0/face_index = 0
+cache/0/embolden = 0.0
+cache/0/transform = Transform2D(1, 0, 0, 1, 0, 0)
+cache/0/spacing_top = 0
+cache/0/spacing_bottom = 0
+cache/0/spacing_space = 0
+cache/0/spacing_glyph = 0
+cache/0/baseline_offset = 0.0
 cache/0/16/0/ascent = 0.0
 cache/0/16/0/descent = 0.0
 cache/0/16/0/underline_position = 0.0
@@ -67,12 +85,12 @@ extents_y = 4211184
 extents_x = 3276800
 extents_y = 73785184
 
-[node name="Main" type="Node2D"]
+[node name="Main" type="Node2D" unique_id=599631923]
 script = ExtResource("1_adh32")
 
-[node name="CanvasLayer" type="CanvasLayer" parent="."]
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1739192290]
 
-[node name="MainMenu" type="HBoxContainer" parent="CanvasLayer"]
+[node name="MainMenu" type="HBoxContainer" parent="CanvasLayer" unique_id=659497028]
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
@@ -85,21 +103,21 @@ offset_bottom = 20.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="LocalButton" type="Button" parent="CanvasLayer/MainMenu"]
+[node name="LocalButton" type="Button" parent="CanvasLayer/MainMenu" unique_id=590197661]
 layout_mode = 2
 text = "Play Locally"
 
-[node name="OnlineButton" type="Button" parent="CanvasLayer/MainMenu"]
+[node name="OnlineButton" type="Button" parent="CanvasLayer/MainMenu" unique_id=128781519]
 layout_mode = 2
 text = "Play Online"
 
-[node name="ConnectionPanel" type="Window" parent="CanvasLayer"]
+[node name="ConnectionPanel" type="Window" parent="CanvasLayer" unique_id=1662419152]
 title = "Online"
 position = Vector2i(0, 36)
 size = Vector2i(500, 150)
 visible = false
 
-[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/ConnectionPanel"]
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/ConnectionPanel" unique_id=940609488]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -109,51 +127,51 @@ offset_right = -10.0
 offset_bottom = -10.0
 theme_override_constants/separation = 10
 
-[node name="GridContainer" type="GridContainer" parent="CanvasLayer/ConnectionPanel/VBoxContainer"]
+[node name="GridContainer" type="GridContainer" parent="CanvasLayer/ConnectionPanel/VBoxContainer" unique_id=351691005]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 columns = 2
 
-[node name="HostLabel" type="Label" parent="CanvasLayer/ConnectionPanel/VBoxContainer/GridContainer"]
+[node name="HostLabel" type="Label" parent="CanvasLayer/ConnectionPanel/VBoxContainer/GridContainer" unique_id=1666016625]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Host"
 
-[node name="HostField" type="LineEdit" parent="CanvasLayer/ConnectionPanel/VBoxContainer/GridContainer"]
+[node name="HostField" type="LineEdit" parent="CanvasLayer/ConnectionPanel/VBoxContainer/GridContainer" unique_id=2051608886]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "127.0.0.1"
 
-[node name="PortLabel" type="Label" parent="CanvasLayer/ConnectionPanel/VBoxContainer/GridContainer"]
+[node name="PortLabel" type="Label" parent="CanvasLayer/ConnectionPanel/VBoxContainer/GridContainer" unique_id=971018990]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Port"
 
-[node name="PortField" type="LineEdit" parent="CanvasLayer/ConnectionPanel/VBoxContainer/GridContainer"]
+[node name="PortField" type="LineEdit" parent="CanvasLayer/ConnectionPanel/VBoxContainer/GridContainer" unique_id=321642781]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "9999"
 
-[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/ConnectionPanel/VBoxContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/ConnectionPanel/VBoxContainer" unique_id=954006611]
 layout_mode = 2
 
-[node name="ServerButton" type="Button" parent="CanvasLayer/ConnectionPanel/VBoxContainer/HBoxContainer"]
+[node name="ServerButton" type="Button" parent="CanvasLayer/ConnectionPanel/VBoxContainer/HBoxContainer" unique_id=1425637558]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Server"
 
-[node name="ClientButton" type="Button" parent="CanvasLayer/ConnectionPanel/VBoxContainer/HBoxContainer"]
+[node name="ClientButton" type="Button" parent="CanvasLayer/ConnectionPanel/VBoxContainer/HBoxContainer" unique_id=1330949417]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Client"
 
-[node name="SpectatorButton" type="Button" parent="CanvasLayer/ConnectionPanel/VBoxContainer/HBoxContainer"]
+[node name="SpectatorButton" type="Button" parent="CanvasLayer/ConnectionPanel/VBoxContainer/HBoxContainer" unique_id=1718798032]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Spectator"
 
-[node name="MessageLabel" type="Label" parent="CanvasLayer"]
+[node name="MessageLabel" type="Label" parent="CanvasLayer" unique_id=1528848616]
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
@@ -163,7 +181,7 @@ offset_bottom = 124.0
 theme_override_fonts/font = SubResource("1")
 horizontal_alignment = 1
 
-[node name="SyncLostLabel" type="Label" parent="CanvasLayer"]
+[node name="SyncLostLabel" type="Label" parent="CanvasLayer" unique_id=609314306]
 visible = false
 anchors_preset = 1
 anchor_left = 1.0
@@ -173,7 +191,7 @@ offset_bottom = 14.0
 theme_override_fonts/font = SubResource("2")
 text = "Regaining sync..."
 
-[node name="ResetButton" type="Button" parent="CanvasLayer"]
+[node name="ResetButton" type="Button" parent="CanvasLayer" unique_id=1859692627]
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
@@ -185,9 +203,9 @@ grow_horizontal = 0
 grow_vertical = 0
 text = "RESET"
 
-[node name="GameUI" type="CanvasLayer" parent="."]
+[node name="GameUI" type="CanvasLayer" parent="." unique_id=764983912]
 
-[node name="ServerHealth" type="ProgressBar" parent="GameUI"]
+[node name="ServerHealth" type="ProgressBar" parent="GameUI" unique_id=1384449148]
 offset_left = 30.0
 offset_top = 30.0
 offset_right = 519.0
@@ -200,7 +218,7 @@ value = 1000.0
 fill_mode = 1
 show_percentage = false
 
-[node name="ClientHealth" type="ProgressBar" parent="GameUI"]
+[node name="ClientHealth" type="ProgressBar" parent="GameUI" unique_id=593538897]
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
@@ -216,7 +234,7 @@ max_value = 1000.0
 value = 1000.0
 show_percentage = false
 
-[node name="WinnerText" type="Label" parent="GameUI"]
+[node name="WinnerText" type="Label" parent="GameUI" unique_id=1655398482]
 visible = false
 anchors_preset = 8
 anchor_left = 0.5
@@ -235,33 +253,33 @@ theme_override_font_sizes/font_size = 48
 text = "ServerPlayer Wins!"
 horizontal_alignment = 1
 
-[node name="FightManager" type="Node" parent="."]
+[node name="FightManager" type="Node" parent="." unique_id=1730820854]
 script = ExtResource("3_yyshs")
 
-[node name="RestartRoundTimer" type="Node" parent="FightManager"]
+[node name="RestartRoundTimer" type="Node" parent="FightManager" unique_id=1291782825]
 script = ExtResource("4_0f5y5")
 one_shot = true
 wait_ticks = 180
 
-[node name="BackgroundVisuals" type="Node2D" parent="."]
+[node name="BackgroundVisuals" type="Node2D" parent="." unique_id=13523490]
 
-[node name="Sprite2D2" type="Sprite2D" parent="BackgroundVisuals"]
+[node name="Sprite2D2" type="Sprite2D" parent="BackgroundVisuals" unique_id=870935173]
 modulate = Color(0.6715, 0.7189, 0.79, 1)
 z_index = -2
 position = Vector2(571, 318)
 scale = Vector2(1282, 704)
 texture = SubResource("CanvasTexture_42da7")
 
-[node name="Sprite2D" type="Sprite2D" parent="BackgroundVisuals"]
+[node name="Sprite2D" type="Sprite2D" parent="BackgroundVisuals" unique_id=1771096282]
 modulate = Color(0.1517, 0.29807, 0.41, 1)
 z_index = -2
 position = Vector2(565, 584)
 scale = Vector2(1294, 172)
 texture = SubResource("CanvasTexture_42da7")
 
-[node name="Environment" type="SGFixedNode2D" parent="."]
+[node name="Environment" type="SGFixedNode2D" parent="." unique_id=1041208469]
 
-[node name="Platform1" type="SGStaticBody2D" parent="Environment"]
+[node name="Platform1" type="SGStaticBody2D" parent="Environment" unique_id=1873397947]
 collision_layer = 17
 collision_mask = 17
 fixed_position_x = 5767168
@@ -270,15 +288,15 @@ fixed_scale_y = 32768
 position = Vector2(88, 337.32)
 scale = Vector2(1, 0.5)
 
-[node name="Sprite2D" type="Sprite2D" parent="Environment/Platform1"]
+[node name="Sprite2D" type="Sprite2D" parent="Environment/Platform1" unique_id=1591691567]
 z_index = -2
 texture = ExtResource("5_ymjv0")
 
-[node name="SGCollisionShape2D" type="SGCollisionShape2D" parent="Environment/Platform1"]
+[node name="SGCollisionShape2D" type="SGCollisionShape2D" parent="Environment/Platform1" unique_id=1771975233]
 shape = SubResource("SGRectangleShape2D_22kmc")
 modulate = Color(1, 1, 1, 0.27451)
 
-[node name="Platform2" type="SGStaticBody2D" parent="Environment"]
+[node name="Platform2" type="SGStaticBody2D" parent="Environment" unique_id=1599913286]
 collision_layer = 17
 collision_mask = 17
 fixed_position_x = 69730304
@@ -287,54 +305,54 @@ fixed_scale_y = 32768
 position = Vector2(1064, 337.32)
 scale = Vector2(1, 0.5)
 
-[node name="Sprite2D" type="Sprite2D" parent="Environment/Platform2"]
+[node name="Sprite2D" type="Sprite2D" parent="Environment/Platform2" unique_id=896539234]
 z_index = -2
 texture = ExtResource("5_ymjv0")
 
-[node name="SGCollisionShape2D" type="SGCollisionShape2D" parent="Environment/Platform2"]
+[node name="SGCollisionShape2D" type="SGCollisionShape2D" parent="Environment/Platform2" unique_id=1545466866]
 shape = SubResource("SGRectangleShape2D_22kmc")
 modulate = Color(1, 1, 1, 0.27451)
 
-[node name="Floor" type="SGStaticBody2D" parent="Environment"]
+[node name="Floor" type="SGStaticBody2D" parent="Environment" unique_id=276131486]
 collision_layer = 17
 fixed_position_x = 37748736
 fixed_position_y = 34013184
 position = Vector2(576, 519)
 
-[node name="SGCollisionShape2D" type="SGCollisionShape2D" parent="Environment/Floor"]
+[node name="SGCollisionShape2D" type="SGCollisionShape2D" parent="Environment/Floor" unique_id=427597193]
 shape = SubResource("SGRectangleShape2D_fhlvv")
 fixed_position_y = 4211184
 modulate = Color(1, 1, 1, 0.305882)
 position = Vector2(0, 64.2576)
 
-[node name="RightWall" type="SGStaticBody2D" parent="Environment"]
+[node name="RightWall" type="SGStaticBody2D" parent="Environment" unique_id=838205947]
 fixed_position_x = 78774272
 position = Vector2(1202, 0)
 
-[node name="SGCollisionShape2D" type="SGCollisionShape2D" parent="Environment/RightWall"]
+[node name="SGCollisionShape2D" type="SGCollisionShape2D" parent="Environment/RightWall" unique_id=493348213]
 shape = SubResource("SGRectangleShape2D_ltkfr")
 fixed_position_y = 21233664
 modulate = Color(1, 1, 1, 0.305882)
 position = Vector2(0, 324)
 
-[node name="LeftWall" type="SGStaticBody2D" parent="Environment"]
+[node name="LeftWall" type="SGStaticBody2D" parent="Environment" unique_id=1555196513]
 fixed_position_x = -3276800
 position = Vector2(-50, 0)
 
-[node name="SGCollisionShape2D" type="SGCollisionShape2D" parent="Environment/LeftWall"]
+[node name="SGCollisionShape2D" type="SGCollisionShape2D" parent="Environment/LeftWall" unique_id=1417849684]
 shape = SubResource("SGRectangleShape2D_ltkfr")
 fixed_position_y = 21233664
 modulate = Color(1, 1, 1, 0.305882)
 position = Vector2(0, 324)
 
-[node name="ServerPlayer" parent="." node_paths=PackedStringArray("health_bar", "target_fighter") instance=ExtResource("4_2ampb")]
+[node name="ServerPlayer" parent="." unique_id=1860489637 node_paths=PackedStringArray("health_bar", "target_fighter") instance=ExtResource("4_2ampb")]
 fixed_position_x = 20185088
 fixed_position_y = 34013184
 position = Vector2(308, 519)
 health_bar = NodePath("../GameUI/ServerHealth")
 target_fighter = NodePath("../ClientPlayer")
 
-[node name="ClientPlayer" parent="." node_paths=PackedStringArray("health_bar", "target_fighter") instance=ExtResource("4_2ampb")]
+[node name="ClientPlayer" parent="." unique_id=1497961325 node_paths=PackedStringArray("health_bar", "target_fighter") instance=ExtResource("4_2ampb")]
 fixed_position_x = 55312384
 fixed_position_y = 34013184
 fixed_scale_x = -65536
@@ -345,10 +363,13 @@ health_bar = NodePath("../GameUI/ClientHealth")
 facing_right = false
 target_fighter = NodePath("../ServerPlayer")
 
+[node name="AnimationPlayer" parent="ClientPlayer/Visuals" index="0"]
+autoplay = &"idle"
+
 [node name="Sprite2D" parent="ClientPlayer/Visuals" index="1"]
 modulate = Color(0.403922, 1, 0.415686, 1)
 
-[node name="SpawnParent" type="SGFixedNode2D" parent="."]
+[node name="SpawnParent" type="SGFixedNode2D" parent="." unique_id=347195281]
 
 [connection signal="pressed" from="CanvasLayer/MainMenu/LocalButton" to="." method="_on_LocalButton_pressed"]
 [connection signal="pressed" from="CanvasLayer/MainMenu/OnlineButton" to="." method="_on_OnlineButton_pressed"]

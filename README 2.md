@@ -1,136 +1,104 @@
 
-Godot Rollback Netcode (Cerbere Cut)
+Godot 回滚网络代码 (Cerbere Cut)
 ======================
 
 ![Logo](icon.png)
 
-This is an addon for implementing rollback and prediction netcode in the Godot
-game engine.
+这是一个用于在 Godot 游戏引擎中实现回滚和预测网络代码的插件。
 
-Beyond the basics (gathering input, saving/loading state, sending messages,
-detecting mismatches, etc) this library aims to provide support for many of
-the other aspects of implementing rollback in a real game, including timers,
-animation, random number generation, and sound - along with high-quality
-debugging tools to make solving problems easier.
+除了基础功能（收集输入、保存/加载状态、发送消息、检测不匹配等）之外，这个库还旨在支持在真实游戏中实现回滚的许多其他方面，包括计时器、动画、随机数生成和声音 - 以及高质量的调试工具，使解决问题更容易。
 
-Implementing rollback and prediction is HARD, and so every little bit of help
-is important. :-)
+实现回滚和预测是困难的，因此每一点帮助都很重要。:-)
 
-This is a fork of Godot Rollback Netcode
+这是 Godot Rollback Netcode 的一个分支
 ------------
-The Cerbere Cut is a fork of [Snopek Games Godot Rollback Netcode](https://gitlab.com/snopek-games/godot-rollback-netcode), the majority of the code in this repo comes from there. This fork comes from noting that the source repo is too slow for the game that we are developping.
-We solve this by
+Cerbere Cut 是 [Snopek Games Godot Rollback Netcode](https://gitlab.com/snopek-games/godot-rollback-netcode) 的一个分支，此仓库中的大部分代码来自那里。这个分支源于我们注意到原始仓库对于我们正在开发的游戏来说太慢了。
+我们通过以下方式解决这个问题：
 
- - Using a custom Godot build, which enables rewriting critical loops in C++.
- - Using optimizations coming from the observation that rolling **back** is critical and must be very fast, while rolling **forward** is reserved for rarer cases like debugging or getting a player into an already started match, which is allowed to be (very slightly) slower.
+ - 使用自定义 Godot 构建，这使得我们可以用 C++ 重写关键循环。
+ - 利用观察到的优化：回滚（rolling **back**）是关键的，必须非常快，而前滚（rolling **forward**）则用于更罕见的情况，如调试或让玩家加入已开始的比赛，这允许（非常轻微地）慢一些。
  
- The first point can be cumbersome for users, but we make the guess that a large part of Godot Rollback Plugin users will anyway also use [SG Physics 2D](https://gitlab.com/snopek-games/sg-physics-2d), for its deterministics physics. The Cerbere Cut directly reallies on using [our fork of SG Physics 2D](https://gitlab.com/BimDav/sg-physics-2d).
+ 第一点对用户来说可能很麻烦，但我们猜测，很大一部分 Godot Rollback Plugin 用户无论如何都会使用 [SG Physics 2D](https://gitlab.com/snopek-games/sg-physics-2d)，因为它具有确定性物理。Cerbere Cut 直接依赖于使用 [我们的 SG Physics 2D 分支](https://gitlab.com/BimDav/sg-physics-2d)。
  
- Main API differences with Godot Rollback Netcode
+ 与 Godot Rollback Netcode 的主要 API 差异
  ------
- The majority of the changes are under the hood and you won't have to change your habits.
+ 大多数更改都在底层，您不必改变您的习惯。
  
- - Most importantly, there is a `SyncManager.set_synced()` method to set a property in a rollback safe way. A property set by `set_synced()`will be correctly rolled back. Furthermore, in GRN, when nodes don't change state, they still call `_save_state()` and `_load_state()`, and it can create a bottleneck if there are many such nodes. By using `set_synced`, you don't have to implement `_save_state()`nor `_load_state()`, and nodes that don't change state will not use compute time.
- - `_network_spawn`is only called the first time a node is spawned by calling `SyncManager.spawn()`, not when it is despawned by using `SyncManager.despawn()`, and that despawn is cancelled by a rollback. In GRN, in this case you could get a node that was different from the one that was "wrongly" despawned, and you had to call `_network_spawn()` again. In the Cerbere Cut, you will always get the right node, so things that are initialized at spawn can be relied on for the whole lifetime of the node. 
-If this is confusing, simply note that `_network_spawn()` is called when spawning a node with `SyncManager.spawn()`, that's it, no other cases!
-- In the same way, `_network_despawn()`is only called when a node is despawned by calling `SyncManager.despawn()`.
-- There is an added virtual method, `_network_prepare_for_reuse()`which you can use when you have checked the "Reuse Despawned Nodes" option, to reinitialize their properties before being reused.
-- `SyncManager.connect_signal()` can be used to connect a signal on a node so that that connection is written into the state, for example for replaying the game.
+ - 最重要的是，有一个 `SyncManager.set_synced()` 方法，可以以回滚安全的方式设置属性。通过 `set_synced()` 设置的属性将被正确回滚。此外，在 GRN 中，当节点不改变状态时，它们仍然会调用 `_save_state()` 和 `_load_state()`，如果有许多这样的节点，这会造成瓶颈。通过使用 `set_synced`，您不必实现 `_save_state()` 或 `_load_state()`，并且不改变状态的节点将不使用计算时间。
+ - `_network_spawn` 仅在第一次通过调用 `SyncManager.spawn()` 生成节点时调用，而不是在通过使用 `SyncManager.despawn()` 取消生成并且该取消生成被回滚时调用。在 GRN 中，在这种情况下，您可能会得到一个与被"错误地"取消生成的节点不同的节点，并且您必须再次调用 `_network_spawn()`。在 Cerbere Cut 中，您将始终获得正确的节点，因此在生成时初始化的内容可以在节点的整个生命周期内依赖！
+ 如果这令人困惑，只需注意：`_network_spawn()` 在使用 `SyncManager.spawn()` 生成节点时调用，仅此而已，没有其他情况！
+ - 同样，`_network_despawn()` 仅在通过调用 `SyncManager.despawn()` 取消生成节点时调用。
+ - 增加了一个虚拟方法 `_network_prepare_for_reuse()`，当您选中了"重用已取消生成的节点"选项时，可以使用该方法在重用节点之前重新初始化它们的属性。
+ - `SyncManager.connect_signal()` 可用于连接节点上的信号，以便将该连接写入状态，例如用于回放游戏。
 
  
 
-Tutorials
+教程
 ---------
 
-I'm working on a series of video tutorials on YouTube - here's the
-[playlist](https://www.youtube.com/playlist?list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir),
-and these are the parts that are published as of the last time this README was
-updated:
+我正在 YouTube 上制作一系列视频教程 - 这里是
+[播放列表](https://www.youtube.com/playlist?list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir)，
+以下是截至上次更新此 README 时已发布的部分：
 
-- [Rollback netcode in Godot (part 1): What is rollback and prediction?](https://www.youtube.com/watch?v=zvqQPbT8rAE&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=1)
-- [Rollback netcode in Godot (part 2): Getting Started with the Godot Rollback Netcode addon!](https://www.youtube.com/watch?v=NsA-lz2B5Sw&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=2)
-- [Rollback netcode in Godot (part 3): Making a custom MessageSerializer](https://www.youtube.com/watch?v=Bxao6x8-2vw&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=3)
-- [Rollback netcode in Godot (part 4): Spawning scenes and NetworkTimer](https://www.youtube.com/watch?v=iQtodIxM2-0&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=4)
-- [Rollback netcode in Godot (part 5): State, hashing and mismatches](https://www.youtube.com/watch?v=PK4jsbUPC38&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=5)
-- [Rollback netcode in Godot (part 6): Playing offline!](https://www.youtube.com/watch?v=Yk7sLEK2vCg&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=6)
-- [Rollback netcode in Godot (part 7): Input Delay and Interpolation](https://www.youtube.com/watch?v=Y45rWIS3Qag&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=7)
-- [Rollback netcode in Godot (part 8): Animation Players](https://www.youtube.com/watch?v=avCF3BQV15U&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=8)
-- [Rollback netcode in Godot (part 9): Sound Effects](https://www.youtube.com/watch?v=qY7IVObS2Rw&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=9)
-- [Rollback netcode in Godot (part 10): Random Numbers](https://www.youtube.com/watch?v=jjoRxXoTpPQ&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=10)
-- [Rollback netcode in Godot (part 11): Advanced Input Prediction](https://www.youtube.com/watch?v=fgzEBHQyf2k&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=11)
+- [Godot 中的回滚网络代码（第 1 部分）：什么是回滚和预测？](https://www.youtube.com/watch?v=zvqQPbT8rAE&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=1)
+- [Godot 中的回滚网络代码（第 2 部分）：开始使用 Godot Rollback Netcode 插件！](https://www.youtube.com/watch?v=NsA-lz2B5Sw&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=2)
+- [Godot 中的回滚网络代码（第 3 部分）：制作自定义 MessageSerializer](https://www.youtube.com/watch?v=Bxao6x8-2vw&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=3)
+- [Godot 中的回滚网络代码（第 4 部分）：生成场景和 NetworkTimer](https://www.youtube.com/watch?v=iQtodIxM2-0&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=4)
+- [Godot 中的回滚网络代码（第 5 部分）：状态、哈希和不匹配](https://www.youtube.com/watch?v=PK4jsbUPC38&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=5)
+- [Godot 中的回滚网络代码（第 6 部分）：离线游玩！](https://www.youtube.com/watch?v=Yk7sLEK2vCg&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=6)
+- [Godot 中的回滚网络代码（第 7 部分）：输入延迟和插值](https://www.youtube.com/watch?v=Y45rWIS3Qag&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=7)
+- [Godot 中的回滚网络代码（第 8 部分）：动画播放器](https://www.youtube.com/watch?v=avCF3BQV15U&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=8)
+- [Godot 中的回滚网络代码（第 9 部分）：音效](https://www.youtube.com/watch?v=qY7IVObS2Rw&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=9)
+- [Godot 中的回滚网络代码（第 10 部分）：随机数](https://www.youtube.com/watch?v=jjoRxXoTpPQ&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=10)
+- [Godot 中的回滚网络代码（第 11 部分）：高级输入预测](https://www.youtube.com/watch?v=fgzEBHQyf2k&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=11)
 
-More videos are coming soon!
+更多视频即将推出！
 
-Installing
+安装
 ----------
 
-This addon is implemented as an editor plugin.
+这个插件是作为编辑器插件实现的。
 
-If you've never installed a plugin before, please see the
-[official docs on how to install plugins](https://docs.godotengine.org/en/stable/tutorials/plugins/editor/installing_plugins.html).
+如果您以前从未安装过插件，请参阅
+[关于如何安装插件的官方文档](https://docs.godotengine.org/en/stable/tutorials/plugins/editor/installing_plugins.html)。
 
-However, the short version is:
+不过，简短的版本是：
 
-1. Copy the `addons/godot-rollback-netcode` directory from this project into
-your Godot project *at the exact same path*. The easiest way to do this is in
-the AssetLib right in the Godot editor - search for "Godot Rollback Netcode".
+1. 将此项目中的 `addons/godot-rollback-netcode` 目录复制到您的 Godot 项目中 *完全相同的路径*。最简单的方法是在 Godot 编辑器中的 AssetLib 中 - 搜索 "Godot Rollback Netcode"。
 
-2. Enable the plugin by clicking **Project** -> **Project settings...**, going
-to the "Plugins" tab, and clicking the "Enable" checkbox next to "Godot
-Rollback Netcode".
+2. 通过点击 **项目** -> **项目设置...**，进入 "插件" 选项卡，然后点击 "Godot Rollback Netcode" 旁边的 "启用" 复选框来启用插件。
 
-Games using this addon
+使用此插件的游戏
 ----------------------
 
 - [A Good Day](https://store.steampowered.com/app/2097850/A_Good_Day/)
 
-If you release a game using this addon, please make an MR (Merge Request) to
-add it to the list!
+如果您发布了使用此插件的游戏，请提交 MR（合并请求）将其添加到列表中！
 
-Overview
+概述
 --------
 
-This is a quick overview of the different pieces that the addon includes.
+这是对插件包含的不同部分的快速概述。
 
-### Singletons ###
+### 单例 ###
 
-- `res://addons/godot-rollback-netcode/SyncManager.gd`: This is the core of
-  the addon. It will be added to your project automatically when you enable
-  the plugin. It must be named `SyncManager` for everything to work
-  correctly.
+- `res://addons/godot-rollback-netcode/SyncManager.gd`：这是插件的核心。启用插件时，它会自动添加到您的项目中。它必须命名为 `SyncManager` 才能正常工作。
 
-- `res://addons/godot-rollback-netcode/SyncDebugger.gd`: Adding this
-  singleton will cause more debug messages to be printed to the console (and
-  captured in the normal Godot logs) and make a debug overlay available. By
-  default, the overlay can be shown by pressing F11, but you can assign any
-  input event to the "sync_debug" action in the Input Map in your project's
-  settings.
+- `res://addons/godot-rollback-netcode/SyncDebugger.gd`：添加此单例会导致更多调试消息打印到控制台（并捕获在正常的 Godot 日志中），并提供调试覆盖层。默认情况下，按 F11 可以显示覆盖层，但您可以在项目设置的输入映射中将任何输入事件分配给 "sync_debug" 操作。
 
-- `res://addons/godot-rollback-netcode/SyncReplay.gd`: Adding this singleton
-  will allow you to replay matches from log files, using the "Log Inspector"
-  tool that is added to the Godot editor. See the "Setting up replay"
-  sub-section below for more information.
+- `res://addons/godot-rollback-netcode/SyncReplay.gd`：添加此单例将允许您使用添加到 Godot 编辑器中的 "日志检查器" 工具从日志文件回放匹配。有关更多信息，请参阅下面的 "设置回放" 小节。
 
-### Important properties, methods and signals on `SyncManager` ###
+### `SyncManager` 上的重要属性、方法和信号 ###
 
-The `SyncManager` singleton is the core of this addon, and one of the primary
-ways that your game will interact with the addon. (The other primary way is
-via virtual methods that you'll implement in scripts on your nodes - see the
-section called "Virtual methods" below for more information.)
+`SyncManager` 单例是此插件的核心，也是您的游戏与插件交互的主要方式之一。（另一种主要方式是通过您将在节点脚本中实现的虚拟方法 - 有关更多信息，请参阅下面的 "虚拟方法" 部分。）
 
-#### Properties: ####
+#### 属性：####
 
-- `current_tick: int`: The current tick that we are executing. This will
-  update during rollback to be the tick that is presently being re-executed.
+- `current_tick: int`：我们正在执行的当前 tick。在回滚期间，这将更新为当前正在重新执行的 tick。
 
-- `input_tick: int`: The tick we are currently gathering local input for. If
-  there is an input delay configured in Project Settings, this will be ahead
-  of `current_tick` by the number of frames of input delay. This doesn't
-  change during rollback.
+- `input_tick: int`：我们当前正在收集本地输入的 tick。如果在项目设置中配置了输入延迟，这将比 `current_tick` 提前输入延迟的帧数。在回滚期间，这不会改变。
 
-- `started: bool`: will be true if synchronization has started; otherwise
-  it'll be false. This property is read-only - you should call the `start()`
-  or `stop()` methods to start or stop synchronizing.
+- `started: bool`：如果同步已开始，则为 true；否则为 false。此属性是只读的 - 您应该调用 `start()` 或 `stop()` 方法来开始或停止同步。
 
 #### Methods: ####
 
@@ -751,27 +719,26 @@ debugging tools to make solving problems easier.
 Implementing rollback and prediction is HARD, and so every little bit of help
 is important. :-)
 
-Tutorials
+教程
 ---------
 
-I'm working on a series of video tutorials on YouTube - here's the
-[playlist](https://www.youtube.com/playlist?list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir),
-and these are the parts that are published as of the last time this README was
-updated:
+我正在 YouTube 上制作一系列视频教程 - 这里是
+[播放列表](https://www.youtube.com/playlist?list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir)，
+以下是截至上次更新此 README 时已发布的部分：
 
-- [Rollback netcode in Godot (part 1): What is rollback and prediction?](https://www.youtube.com/watch?v=zvqQPbT8rAE&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=1)
-- [Rollback netcode in Godot (part 2): Getting Started with the Godot Rollback Netcode addon!](https://www.youtube.com/watch?v=NsA-lz2B5Sw&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=2)
-- [Rollback netcode in Godot (part 3): Making a custom MessageSerializer](https://www.youtube.com/watch?v=Bxao6x8-2vw&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=3)
-- [Rollback netcode in Godot (part 4): Spawning scenes and NetworkTimer](https://www.youtube.com/watch?v=iQtodIxM2-0&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=4)
-- [Rollback netcode in Godot (part 5): State, hashing and mismatches](https://www.youtube.com/watch?v=PK4jsbUPC38&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=5)
-- [Rollback netcode in Godot (part 6): Playing offline!](https://www.youtube.com/watch?v=Yk7sLEK2vCg&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=6)
-- [Rollback netcode in Godot (part 7): Input Delay and Interpolation](https://www.youtube.com/watch?v=Y45rWIS3Qag&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=7)
-- [Rollback netcode in Godot (part 8): Animation Players](https://www.youtube.com/watch?v=avCF3BQV15U&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=8)
-- [Rollback netcode in Godot (part 9): Sound Effects](https://www.youtube.com/watch?v=qY7IVObS2Rw&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=9)
-- [Rollback netcode in Godot (part 10): Random Numbers](https://www.youtube.com/watch?v=jjoRxXoTpPQ&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=10)
-- [Rollback netcode in Godot (part 11): Advanced Input Prediction](https://www.youtube.com/watch?v=fgzEBHQyf2k&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=11)
+- [Godot 中的回滚网络代码（第 1 部分）：什么是回滚和预测？](https://www.youtube.com/watch?v=zvqQPbT8rAE&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=1)
+- [Godot 中的回滚网络代码（第 2 部分）：开始使用 Godot Rollback Netcode 插件！](https://www.youtube.com/watch?v=NsA-lz2B5Sw&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=2)
+- [Godot 中的回滚网络代码（第 3 部分）：制作自定义 MessageSerializer](https://www.youtube.com/watch?v=Bxao6x8-2vw&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=3)
+- [Godot 中的回滚网络代码（第 4 部分）：生成场景和 NetworkTimer](https://www.youtube.com/watch?v=iQtodIxM2-0&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=4)
+- [Godot 中的回滚网络代码（第 5 部分）：状态、哈希和不匹配](https://www.youtube.com/watch?v=PK4jsbUPC38&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=5)
+- [Godot 中的回滚网络代码（第 6 部分）：离线游玩！](https://www.youtube.com/watch?v=Yk7sLEK2vCg&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=6)
+- [Godot 中的回滚网络代码（第 7 部分）：输入延迟和插值](https://www.youtube.com/watch?v=Y45rWIS3Qag&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=7)
+- [Godot 中的回滚网络代码（第 8 部分）：动画播放器](https://www.youtube.com/watch?v=avCF3BQV15U&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=8)
+- [Godot 中的回滚网络代码（第 9 部分）：音效](https://www.youtube.com/watch?v=qY7IVObS2Rw&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=9)
+- [Godot 中的回滚网络代码（第 10 部分）：随机数](https://www.youtube.com/watch?v=jjoRxXoTpPQ&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=10)
+- [Godot 中的回滚网络代码（第 11 部分）：高级输入预测](https://www.youtube.com/watch?v=fgzEBHQyf2k&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=11)
 
-More videos are coming soon!
+更多视频即将推出！
 
 Installing
 ----------
@@ -801,50 +768,30 @@ Games using this addon
 If you release a game using this addon, please make an MR (Merge Request) to
 add it to the list!
 
-Overview
+概述
 --------
 
-This is a quick overview of the different pieces that the addon includes.
+这是对插件包含的不同部分的快速概述。
 
-### Singletons ###
+### 单例 ###
 
-- `res://addons/godot-rollback-netcode/SyncManager.gd`: This is the core of
-  the addon. It will be added to your project automatically when you enable
-  the plugin. It must be named `SyncManager` for everything to work
-  correctly.
+- `res://addons/godot-rollback-netcode/SyncManager.gd`：这是插件的核心。启用插件时，它会自动添加到您的项目中。它必须命名为 `SyncManager` 才能正常工作。
 
-- `res://addons/godot-rollback-netcode/SyncDebugger.gd`: Adding this
-  singleton will cause more debug messages to be printed to the console (and
-  captured in the normal Godot logs) and make a debug overlay available. By
-  default, the overlay can be shown by pressing F11, but you can assign any
-  input event to the "sync_debug" action in the Input Map in your project's
-  settings.
+- `res://addons/godot-rollback-netcode/SyncDebugger.gd`：添加此单例会导致更多调试消息打印到控制台（并捕获在正常的 Godot 日志中），并提供调试覆盖层。默认情况下，按 F11 可以显示覆盖层，但您可以在项目设置的输入映射中将任何输入事件分配给 "sync_debug" 操作。
 
-- `res://addons/godot-rollback-netcode/SyncReplay.gd`: Adding this singleton
-  will allow you to replay matches from log files, using the "Log Inspector"
-  tool that is added to the Godot editor. See the "Setting up replay"
-  sub-section below for more information.
+- `res://addons/godot-rollback-netcode/SyncReplay.gd`：添加此单例将允许您使用添加到 Godot 编辑器中的 "日志检查器" 工具从日志文件回放匹配。有关更多信息，请参阅下面的 "设置回放" 小节。
 
-### Important properties, methods and signals on `SyncManager` ###
+### `SyncManager` 上的重要属性、方法和信号 ###
 
-The `SyncManager` singleton is the core of this addon, and one of the primary
-ways that your game will interact with the addon. (The other primary way is
-via virtual methods that you'll implement in scripts on your nodes - see the
-section called "Virtual methods" below for more information.)
+`SyncManager` 单例是此插件的核心，也是您的游戏与插件交互的主要方式之一。（另一种主要方式是通过您将在节点脚本中实现的虚拟方法 - 有关更多信息，请参阅下面的 "虚拟方法" 部分。）
 
-#### Properties: ####
+#### 属性：####
 
-- `current_tick: int`: The current tick that we are executing. This will
-  update during rollback to be the tick that is presently being re-executed.
+- `current_tick: int`：我们正在执行的当前 tick。在回滚期间，这将更新为当前正在重新执行的 tick。
 
-- `input_tick: int`: The tick we are currently gathering local input for. If
-  there is an input delay configured in Project Settings, this will be ahead
-  of `current_tick` by the number of frames of input delay. This doesn't
-  change during rollback.
+- `input_tick: int`：我们当前正在收集本地输入的 tick。如果在项目设置中配置了输入延迟，这将比 `current_tick` 提前输入延迟的帧数。在回滚期间，这不会改变。
 
-- `started: bool`: will be true if synchronization has started; otherwise
-  it'll be false. This property is read-only - you should call the `start()`
-  or `stop()` methods to start or stop synchronizing.
+- `started: bool`：如果同步已开始，则为 true；否则为 false。此属性是只读的 - 您应该调用 `start()` 或 `stop()` 方法来开始或停止同步。
 
 #### Methods: ####
 

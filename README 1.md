@@ -3,296 +3,176 @@ Delta Rollback
 
 ![Logo](icon.png)
 
-This is an addon for implementing rollback and prediction netcode in the Godot
-game engine.
+这是一个用于在 Godot 游戏引擎中实现回滚和预测网络代码的插件。
 
-It is based on [Snopek Games Godot Rollback Netcode](https://gitlab.com/snopek-games/godot-rollback-netcode).
-This large fork comes from noting that the source repo is too slow for the game that we are developping.
-We solve this by
+它基于 [Snopek Games Godot Rollback Netcode](https://gitlab.com/snopek-games/godot-rollback-netcode)。
+这个大型分支源于我们注意到原始仓库对于我们正在开发的游戏来说太慢了。
+我们通过以下方式解决这个问题：
 
- - Using GDExtension, which enables rewriting critical loops in C++.
- - Using optimizations coming from the observation that rolling **back** is critical and must be very fast, while rolling **forward** is reserved for rarer cases like debugging or getting a player into an already started match, which is allowed to be (very slightly) slower.
+ - 使用 GDExtension，这使得我们可以用 C++ 重写关键循环。
+ - 利用观察到的优化：回滚（rolling **back**）是关键的，必须非常快，而前滚（rolling **forward**）则用于更罕见的情况，如调试或让玩家加入已开始的比赛，这允许（非常轻微地）慢一些。
 
-Beyond the basics (gathering input, saving/loading state, sending messages,
-detecting mismatches, etc) this library aims to provide support for many of
-the other aspects of implementing rollback in a real game, including timers,
-animation, random number generation, and sound - along with high-quality
-debugging tools to make solving problems easier.
+除了基础功能（收集输入、保存/加载状态、发送消息、检测不匹配等）之外，这个库还旨在支持在真实游戏中实现回滚的许多其他方面，包括计时器、动画、随机数生成和声音 - 以及高质量的调试工具，使解决问题更容易。
 
-Implementing rollback and prediction is HARD, and so every little bit of help
-is important. :-)
+实现回滚和预测是困难的，因此每一点帮助都很重要。:-)
 
-Tutorials
+教程
 ---------
 
-David Snopek made a fantastic series of video tutorials on YouTube for his Godot Rollback Netcode addon - here's the
-[playlist](https://www.youtube.com/playlist?list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir),
-and these are the parts that are published as of the last time this README was
-updated:
+David Snopek 为他的 Godot Rollback Netcode 插件制作了一系列精彩的 YouTube 视频教程 - 这里是
+[播放列表](https://www.youtube.com/playlist?list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir)，
+以下是截至上次更新此 README 时已发布的部分：
 
-- [Rollback netcode in Godot (part 1): What is rollback and prediction?](https://www.youtube.com/watch?v=zvqQPbT8rAE&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=1)
-- [Rollback netcode in Godot (part 2): Getting Started with the Godot Rollback Netcode addon!](https://www.youtube.com/watch?v=NsA-lz2B5Sw&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=2)
-- [Rollback netcode in Godot (part 3): Making a custom MessageSerializer](https://www.youtube.com/watch?v=Bxao6x8-2vw&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=3)
-- [Rollback netcode in Godot (part 4): Spawning scenes and NetworkTimer](https://www.youtube.com/watch?v=iQtodIxM2-0&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=4)
-- [Rollback netcode in Godot (part 5): State, hashing and mismatches](https://www.youtube.com/watch?v=PK4jsbUPC38&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=5)
-- [Rollback netcode in Godot (part 6): Playing offline!](https://www.youtube.com/watch?v=Yk7sLEK2vCg&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=6)
-- [Rollback netcode in Godot (part 7): Input Delay and Interpolation](https://www.youtube.com/watch?v=Y45rWIS3Qag&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=7)
-- [Rollback netcode in Godot (part 8): Animation Players](https://www.youtube.com/watch?v=avCF3BQV15U&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=8)
-- [Rollback netcode in Godot (part 9): Sound Effects](https://www.youtube.com/watch?v=qY7IVObS2Rw&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=9)
-- [Rollback netcode in Godot (part 10): Random Numbers](https://www.youtube.com/watch?v=jjoRxXoTpPQ&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=10)
-- [Rollback netcode in Godot (part 11): Advanced Input Prediction](https://www.youtube.com/watch?v=fgzEBHQyf2k&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=11)
+- [Godot 中的回滚网络代码（第 1 部分）：什么是回滚和预测？](https://www.youtube.com/watch?v=zvqQPbT8rAE&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=1)
+- [Godot 中的回滚网络代码（第 2 部分）：开始使用 Godot Rollback Netcode 插件！](https://www.youtube.com/watch?v=NsA-lz2B5Sw&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=2)
+- [Godot 中的回滚网络代码（第 3 部分）：制作自定义 MessageSerializer](https://www.youtube.com/watch?v=Bxao6x8-2vw&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=3)
+- [Godot 中的回滚网络代码（第 4 部分）：生成场景和 NetworkTimer](https://www.youtube.com/watch?v=iQtodIxM2-0&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=4)
+- [Godot 中的回滚网络代码（第 5 部分）：状态、哈希和不匹配](https://www.youtube.com/watch?v=PK4jsbUPC38&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=5)
+- [Godot 中的回滚网络代码（第 6 部分）：离线游玩！](https://www.youtube.com/watch?v=Yk7sLEK2vCg&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=6)
+- [Godot 中的回滚网络代码（第 7 部分）：输入延迟和插值](https://www.youtube.com/watch?v=Y45rWIS3Qag&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=7)
+- [Godot 中的回滚网络代码（第 8 部分）：动画播放器](https://www.youtube.com/watch?v=avCF3BQV15U&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=8)
+- [Godot 中的回滚网络代码（第 9 部分）：音效](https://www.youtube.com/watch?v=qY7IVObS2Rw&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=9)
+- [Godot 中的回滚网络代码（第 10 部分）：随机数](https://www.youtube.com/watch?v=jjoRxXoTpPQ&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=10)
+- [Godot 中的回滚网络代码（第 11 部分）：高级输入预测](https://www.youtube.com/watch?v=fgzEBHQyf2k&list=PLCBLMvLIundBXwTa6gwlOUNc29_9btoir&index=11)
 
-More videos are coming soon!
+更多视频即将推出！
 
-Installing
+安装
 ----------
 
-This addon is implemented as an editor plugin.
+这个插件是作为编辑器插件实现的。
 
-If you've never installed a plugin before, please see the
-[official docs on how to install plugins](https://docs.godotengine.org/en/stable/tutorials/plugins/editor/installing_plugins.html).
+如果您以前从未安装过插件，请参阅
+[关于如何安装插件的官方文档](https://docs.godotengine.org/en/stable/tutorials/plugins/editor/installing_plugins.html)。
 
-However, the short version is:
+不过，简短的版本是：
 
-1. Copy the `addons/delta_rollback` directory and the `bin/` directory from this project into
-your Godot project *at the exact same path*. The easiest way to do this is in
-the AssetLib right in the Godot editor - search for "Delta Rollback".
+1. 将此项目中的 `addons/delta_rollback` 目录和 `bin/` 目录复制到您的 Godot 项目中 *完全相同的路径*。最简单的方法是在 Godot 编辑器中的 AssetLib 中 - 搜索 "Delta Rollback"。
 
-2. Enable the plugin by clicking **Project** -> **Project settings...**, going
-to the "Plugins" tab, and clicking the "Enable" checkbox next to "Delta Rollback".
+2. 通过点击 **项目** -> **项目设置...**，进入 "插件" 选项卡，然后点击 "Delta Rollback" 旁边的 "启用" 复选框来启用插件。
 
-Games using this addon
+使用此插件的游戏
 ----------------------
 
 - [Jewel Run](https://store.steampowered.com/app/2097850/Jewel_Run/)
 
-If you release a game using this addon, please make an MR (Merge Request) to
-add it to the list!
+如果您发布了使用此插件的游戏，请提交 MR（合并请求）将其添加到列表中！
 
-Overview
+概述
 --------
 
-This is a quick overview of the different pieces that the addon includes.
+这是对插件包含的不同部分的快速概述。
 
-### Singletons ###
+### 单例 ###
 
-- `res://addons/godot-rollback-netcode/SyncManager.gd`: This is the core of
-  the addon. It will be added to your project automatically when you enable
-  the plugin. It must be named `SyncManager` for everything to work
-  correctly.
+- `res://addons/godot-rollback-netcode/SyncManager.gd`：这是插件的核心。启用插件时，它会自动添加到您的项目中。它必须命名为 `SyncManager` 才能正常工作。
 
-- `res://addons/godot-rollback-netcode/SyncDebugger.gd`: Adding this
-  singleton will cause more debug messages to be printed to the console (and
-  captured in the normal Godot logs) and make a debug overlay available. By
-  default, the overlay can be shown by pressing F11, but you can assign any
-  input event to the "sync_debug" action in the Input Map in your project's
-  settings.
+- `res://addons/godot-rollback-netcode/SyncDebugger.gd`：添加此单例会导致更多调试消息打印到控制台（并捕获在正常的 Godot 日志中），并提供调试覆盖层。默认情况下，按 F11 可以显示覆盖层，但您可以在项目设置的输入映射中将任何输入事件分配给 "sync_debug" 操作。
 
-- `res://addons/godot-rollback-netcode/SyncReplay.gd`: Adding this singleton
-  will allow you to replay matches from log files, using the "Log Inspector"
-  tool that is added to the Godot editor. See the "Setting up replay"
-  sub-section below for more information.
+- `res://addons/godot-rollback-netcode/SyncReplay.gd`：添加此单例将允许您使用添加到 Godot 编辑器中的 "日志检查器" 工具从日志文件回放匹配。有关更多信息，请参阅下面的 "设置回放" 小节。
 
-### Important properties, methods and signals on `SyncManager` ###
+### `SyncManager` 上的重要属性、方法和信号 ###
 
-The `SyncManager` singleton is the core of this addon, and one of the primary
-ways that your game will interact with the addon. (The other primary way is
-via virtual methods that you'll implement in scripts on your nodes - see the
-section called "Virtual methods" below for more information.)
+`SyncManager` 单例是此插件的核心，也是您的游戏与插件交互的主要方式之一。（另一种主要方式是通过您将在节点脚本中实现的虚拟方法 - 有关更多信息，请参阅下面的 "虚拟方法" 部分。）
 
-#### Properties: ####
+#### 属性：####
 
-- `current_tick: int`: The current tick that we are executing. This will
-  update during rollback to be the tick that is presently being re-executed.
+- `current_tick: int`：我们正在执行的当前 tick。在回滚期间，这将更新为当前正在重新执行的 tick。
 
-- `input_tick: int`: The tick we are currently gathering local input for. If
-  there is an input delay configured in Project Settings, this will be ahead
-  of `current_tick` by the number of frames of input delay. This doesn't
-  change during rollback.
+- `input_tick: int`：我们当前正在收集本地输入的 tick。如果在项目设置中配置了输入延迟，这将比 `current_tick` 提前输入延迟的帧数。在回滚期间，这不会改变。
 
-- `started: bool`: will be true if synchronization has started; otherwise
-  it'll be false. This property is read-only - you should call the `start()`
-  or `stop()` methods to start or stop synchronizing.
+- `started: bool`：如果同步已开始，则为 true；否则为 false。此属性是只读的 - 您应该调用 `start()` 或 `stop()` 方法来开始或停止同步。
 
-#### Methods: ####
+#### 方法：####
 
-- `add_peer(peer_id: int) -> void`: Adds a peer using its ID within Godot's
-  [High-Level Multiplayer API](https://docs.godotengine.org/en/stable/tutorials/networking/high_level_multiplayer.html).
-  Once a peer is added, the `SyncManager` will start pinging it right away.
-  All peers should be added before calling `SyncManager.start()`.
+- `add_peer(peer_id: int) -> void`：使用其在 Godot 的 [高级多人游戏 API](https://docs.godotengine.org/en/stable/tutorials/networking/high_level_multiplayer.html) 中的 ID 添加一个对等体。添加对等体后，`SyncManager` 将立即开始对其进行 ping。在调用 `SyncManager.start()` 之前，应添加所有对等体。
 
-- `start() -> void`: Starts synchronizing! This should only be called on the
-  "host" (the peer with id 1), which will tell all the other clients to start
-  as well. It's after calling this that the "Virtual methods" described below
-  will start getting called.
+- `start() -> void`：开始同步！这应该只在 "主机"（ID 为 1 的对等体）上调用，这将告诉所有其他客户端也开始同步。调用此方法后，下面描述的 "虚拟方法" 才会开始被调用。
 
-- `stop() -> void`: Stops synchronizing. If called on the "host" (the
-  peer with id 1) it will tell all the clients to stop as well.
+- `stop() -> void`：停止同步。如果在 "主机"（ID 为 1 的对等体）上调用，它将告诉所有客户端也停止同步。
 
-- `clear_peers() -> void`: Clears the list of peers.
+- `clear_peers() -> void`：清除对等体列表。
 
-- `start_logging(log_file_path: String, match_info: Dictionary = {}) -> void`:
-  Starts logging detailed information about the current match to the given
-  log file. The common convention is to put the log files under
-  "user://detailed_logs/". The `match_info` is stored at the start of the
-  log, and is used when loading a replay of the match. This method should
-  be called before `SyncManager.start()` or in response to the "sync_started"
-  signal.
+- `start_logging(log_file_path: String, match_info: Dictionary = {}) -> void`：
+  开始将当前匹配的详细信息记录到给定的日志文件中。常见的约定是将日志文件放在 "user://detailed_logs/" 下。`match_info` 存储在日志的开头，用于加载匹配的回放。此方法应在 `SyncManager.start()` 之前或响应 "sync_started" 信号时调用。
 
-- `stop_logging() -> void`: Stops logging. This method should be called
-  after `SyncManager.stop()` or in response to the "sync_stopped" signal.
+- `stop_logging() -> void`：停止日志记录。此方法应在 `SyncManager.stop()` 之后或响应 "sync_stopped" 信号时调用。
 
-- `set_synced(node: Node, property: String, value, interpolate:=false) -> void`:
-Sets `property`on `node`to `value` in a rollback safe way. If `interpolate`is true, it will interpolate values between frames.
+- `set_synced(node: Node, property: String, value, interpolate:=false) -> void`：
+  以回滚安全的方式将 `node` 上的 `property` 设置为 `value`。如果 `interpolate` 为 true，它将在帧之间插值值。
 
-- `spawn(name: String, parent: Node, scene: PackedScene, data: Dictionary = {}, rename: bool = true) -> Node`:
-  Spawns a scene and makes a "spawn record" in state so that it can be
-  de-spawned or re-spawned as the result of a rollback.
+- `spawn(name: String, parent: Node, scene: PackedScene, data: Dictionary = {}, rename: bool = true) -> Node`：
+  生成一个场景，并在状态中创建一个 "生成记录"，以便可以作为回滚的结果取消生成或重新生成。
 
-  It returns the top-level node that was spawned.
+  它返回生成的顶级节点。
 
-  * `name`: The base name to use for the top-level node that is spawned.
-  * `parent`: The parent node the spawned scene will be added to.
-  * `scene`: The scene to spawn.
-  * `data`: Data that will be passed to `_network_spawn_preprocess()` and
-	`_network_spawn()` on the top-level node. See the "Virtual methods"
-	described below for more information.
-  * `rename`: If true, the actual name of the top-level node that is spawned
-	will have an incrementing integer appended to it. If false, it'll try to
-	use the `name` but this could lead to conflicts. Only set to false if you
-	know for sure that no other sibling node will use that name.
+  * `name`：用于生成的顶级节点的基本名称。
+  * `parent`：生成的场景将添加到的父节点。
+  * `scene`：要生成的场景。
+  * `data`：将传递给顶级节点上的 `_network_spawn_preprocess()` 和 `_network_spawn()` 的数据。有关更多信息，请参阅下面描述的 "虚拟方法"。
+  * `rename`：如果为 true，生成的顶级节点的实际名称将附加一个递增的整数。如果为 false，它将尝试使用 `name`，但这可能会导致冲突。只有在您确定没有其他同级节点会使用该名称时，才将其设置为 false。
 
-- `despawn(node: Node) -> void`: De-spawns a node that was previously
-  spawned via `SyncManager.spawn()`. It calls `_network_despawn()` and removes
-  the "spawn record" in state.  By default, this will also remove the node
-  from its parent and call `node.queue_free()`. However, if you have enabled
-  "Reuse despawned nodes" in Project Settings, then the node will be saved and
-  reused when the same scene needs to be spawned later. This makes it
-  especially important to clean-up the nodes internal state in
-  `_network_prepare_for_reuse()` so that the node is "like new" when reused.
+- `despawn(node: Node) -> void`：取消生成之前通过 `SyncManager.spawn()` 生成的节点。它调用 `_network_despawn()` 并移除状态中的 "生成记录"。默认情况下，这也会将节点从其父节点中移除并调用 `node.queue_free()`。但是，如果您在项目设置中启用了 "重用已取消生成的节点"，则节点将被保存，并在以后需要生成相同场景时重用。这使得在 `_network_prepare_for_reuse()` 中清理节点的内部状态变得尤为重要，以便节点在重用时 "像新的一样"。
 
-- `play_sound(identifier: String, sound: AudioStream, info: Dictionary = {}) -> void`:
-  Plays a sound and records that we played this specific sound on the
-  current tick, so that we won't play it again if we re-execute the same
-  tick again due to a rollback.
-  * `identifier`: A unique identifier for the sound. Only one sound with this
-	identifier will be played on the current tick. The common convention is
-	to use the node path of the node playing the sound, with some sort of
-	"tag" appended, for example:
+- `play_sound(identifier: String, sound: AudioStream, info: Dictionary = {}) -> void`：
+  播放声音并记录我们在当前 tick 上播放了这个特定声音，这样如果我们由于回滚而再次执行相同的 tick，就不会再次播放它。
+  * `identifier`：声音的唯一标识符。在当前 tick 上，只有一个具有此标识符的声音会被播放。常见的约定是使用播放声音的节点的路径，并附加某种 "标签"，例如：
 	```
 	SyncManager.play_sound(str(get_path()) + ':shoot', shoot_sound)
 	```
-  * `sound`: The sound resource to play.
-  * `info`: A set of optional parameters, including:
-	- `position`: A `Vector2` giving the position the sound should originate
-	  from. If omitted, positional audio won't be used.
-	- `volume_db`: A `float` giving the volume in decibels.
-	- `pitch_scale`: A `float` to scale the pitch.
-	- `bus`: The name of the bus to play the sound to. If none is given, the
-	  default bus configured in Project Settings will be used.
-- `connect_signal(node: Node, name: String, target: Node, method: String, binds := [], flags := 0) -> void`:
-Use this to connect a signal to a node so that it is written into state: the signal will automatically be connected when replaying the game in the LogInspector, for example. A signal connected this way will automatically be removed when a node is `prepared_for_reuse`.
+  * `sound`：要播放的声音资源。
+  * `info`：一组可选参数，包括：
+	- `position`：一个 `Vector2`，给出声音应该来自的位置。如果省略，则不使用位置音频。
+	- `volume_db`：一个 `float`，给出音量（分贝）。
+	- `pitch_scale`：一个 `float`，用于缩放音高。
+	- `bus`：播放声音的总线名称。如果未给出，则使用项目设置中配置的默认总线。
+- `connect_signal(node: Node, name: String, target: Node, method: String, binds := [], flags := 0) -> void`：
+  使用此方法将信号连接到节点，以便将其写入状态：例如，在 LogInspector 中回放游戏时，信号将自动连接。以这种方式连接的信号将在节点 `prepared_for_reuse` 时自动移除。
 
-#### Signals: ####
+#### 信号：####
 
-- `sync_started ()`: Emitted when synchronization has started, as a result of
-  calling `SyncManager.start()` on the "host". Even though
-  `SyncManager.start()` is only called on the "host", this signal will be
-  emitted on _all_ peers.
+- `sync_started ()`：当同步开始时发出，这是在 "主机" 上调用 `SyncManager.start()` 的结果。即使 `SyncManager.start()` 只在 "主机" 上调用，此信号也会在 _所有_ 对等体上发出。
 
-- `sync_stopped ()`: Emitted when synchronization has stopped for any reason -
-  it could be due to an error (in which case "sync_error" will have been
-  emitted before this signal) or `SyncManager.stop()` being called locally or
-  on the "host".
+- `sync_stopped ()`：当同步因任何原因停止时发出 - 可能是由于错误（在这种情况下，"sync_error" 会在此信号之前发出）或在本地或 "主机" 上调用了 `SyncManager.stop()`。
 
-- `sync_lost ()`: Emitted when this client has gone far enough out of sync with
-  the other clients that we need to pause for a period of time and attempt to
-  regain synchronization. Your game should show some indication (a message or
-  loading icon) to the player so that they know why the match has suddenly
-  come to a stop.
+- `sync_lost ()`：当此客户端与其他客户端的同步偏差足够大，以至于我们需要暂停一段时间并尝试重新获得同步时发出。您的游戏应该向玩家显示一些指示（消息或加载图标），以便他们知道为什么比赛突然停止。
 
-- `sync_regained ()`: Emitted if we've managed to regain sync after it had been
-  lost. The message or icon your game showed to the player when "sync_lost" was
-  emitted should be removed.
+- `sync_regained ()`：如果我们在失去同步后设法重新获得同步，则发出此信号。当 "sync_lost" 发出时，您的游戏向玩家显示的消息或图标应该被移除。
 
-- `sync_error (msg: String)`: Emitted when a fatal synchronization error has
-  occurred and the match cannot continue. This could be for a number of
-  reasons, which will be identified in a human-readable message in `msg`.
+- `sync_error (msg: String)`：当发生致命同步错误且比赛无法继续时发出。这可能有多种原因，这些原因将在 `msg` 中的人类可读消息中标识。
 
-- `interpolation_frame ()`: If interpolation is enabled in Project Settings,
-  the work of the `SyncManager` will be split between "tick frames" (where
-  input is gathered, rollbacks are performed and ticks are executed) and
-  a variable number of "interpolation frames" that happen between them.
-  This signal is emitted at the end of each interpolation frame, so that
-  you can perform some operations during a frame with more time budget
-  to spare (a lot more needs to happen during tick frames).
+- `interpolation_frame ()`：如果在项目设置中启用了插值，`SyncManager` 的工作将分为 "tick 帧"（收集输入、执行回滚和执行 tick 的地方）和它们之间发生的可变数量的 "插值帧"。此信号在每个插值帧结束时发出，以便您可以在有更多时间预算的帧中执行某些操作（在 tick 帧期间需要发生更多事情）。
 
-### Node types ###
+### 节点类型 ###
 
-This addon include a few rollback-aware node types:
+此插件包含一些支持回滚的节点类型：
 
-- `NetworkTimer`: A replacement for the `Timer` node. Unlike `Timer`, it
-  doesn't wait for a number of seconds, but instead a number of ticks
-  (the `wait_ticks` property).
+- `NetworkTimer`：`Timer` 节点的替代品。与 `Timer` 不同，它不等待若干秒，而是等待若干 tick（`wait_ticks` 属性）。
 
-  If `hash_state` is set to false, then the timer's state won't be included
-  in the hash used to detect state mismatches. This is useful if a timer may
-  only run on a single client, rather than on all clients.
+  如果 `hash_state` 设置为 false，则计时器的状态不会包含在用于检测状态不匹配的哈希中。如果计时器可能只在单个客户端上运行，而不是在所有客户端上运行，这很有用。
 
-- `NetworkAnimationPlayer`: Descends from the built-in `AnimationPlayer` but
-  will only move forward each tick (rather than as time passes) and it
-  supports rollback.
+- `NetworkAnimationPlayer`：继承自内置的 `AnimationPlayer`，但只会在每个 tick 前进（而不是随着时间推移），并且支持回滚。
 
-  If `auto_reset` is set to true, it will automatically play the "RESET"
-  animation every time state is loaded without an animation playing. This can
-  help prevent issues where an animation started, but on rollback it's
-  determined that it shouldn't have started, so the animation is left in an
-  in-between state.
+  如果 `auto_reset` 设置为 true，它将在每次加载没有动画播放的状态时自动播放 "RESET" 动画。这有助于防止动画开始，但在回滚时确定它不应该开始，导致动画处于中间状态的问题。
 
-- `NetworkRandomNumberGenerator`: For generating random numbers in a
-  deterministic way that supports rollback. At the start of the match, the
-  clients need to initialize the node with the same seed. Each time a random
-  number is generated, it's internal state will change in a deterministic way,
-  such that the sequence of numbers it generates on each client will be the
-  same. When a rollback happens, it's internal state will rollback such that
-  it'll generate the same sequence of numbers again.
+- `NetworkRandomNumberGenerator`：用于以支持回滚的确定性方式生成随机数。在比赛开始时，客户端需要使用相同的种子初始化节点。每次生成随机数时，其内部状态都会以确定性方式更改，使得它在每个客户端上生成的数字序列相同。当回滚发生时，其内部状态将回滚，从而再次生成相同的数字序列。
 
-  One way to avoid having to share a seed for every
-  `NetworkRandomNumberGenerator` in the game, is to share a single "mother
-  seed" which is used for one `NetworkRandomNumberGenerator` that
-  generates all the other seeds the game needs. I like to call this the
-  "Johnny Appleseed approach" where "Johnny" is distributing seeds grown from
-  the "mother seed". This will work so long as the nodes are always initialized
-  in a deterministic order!
+  避免为游戏中的每个 `NetworkRandomNumberGenerator` 共享种子的一种方法是共享单个 "母种子"，该种子用于一个 `NetworkRandomNumberGenerator`，该生成器生成游戏所需的所有其他种子。我喜欢将此称为 "Johnny Appleseed 方法"，其中 "Johnny" 分发从 "母种子" 生长的种子。只要节点始终以确定性顺序初始化，这就会起作用！
 
-### Virtual methods ###
+### 虚拟方法 ###
 
-For a node to participate in rollback, it must be in the "network_sync" group,
-which will cause `SyncManager` to call various virtual methods on the node:
+要让节点参与回滚，它必须位于 "network_sync" 组中，这将导致 `SyncManager` 在节点上调用各种虚拟方法：
 
-- `_save_state() -> Dictionary`: Returns the current node state. This same
-  state will be passed to `_load_state()` when performing a rollback.
+- `_save_state() -> Dictionary`：返回当前节点状态。执行回滚时，此相同状态将传递给 `_load_state()`。
 
-  _Warning: Don't put any `Reference`s, `Object`s, `Array`s or `Dictionary`s
-  into state, unless you can duplicate them first. This is because changing
-  the object later will change the data in the state buffer too. And NEVER
-  put `Node`s in state, instead use the node path, or some other way to
-  locate the right node later, since the original node may no longer even
-  exist. Any `Object`s put into state will need special support in your
-  `HashSerializer` (see below) to prevent incorrectly detecting state
-  mismatches._
+  _警告：不要将任何 `Reference`、`Object`、`Array` 或 `Dictionary` 放入状态中，除非您可以先复制它们。这是因为稍后更改对象也会更改状态缓冲区中的数据。并且永远不要将 `Node` 放入状态中，而是使用节点路径或其他方式在以后定位正确的节点，因为原始节点可能不再存在。放入状态中的任何 `Object` 都需要在您的 `HashSerializer`（见下文）中提供特殊支持，以防止错误地检测到状态不匹配。_
 
-- `_load_state(state: Dictionary) -> void`: Called to roll the node back to a
-  previous state, which originated from this node's `_save_state()` method.
+- `_load_state(state: Dictionary) -> void`：调用以将节点回滚到之前的状态，该状态源自此节点的 `_save_state()` 方法。
 
-- `_interpolate_state(old_state: Dictionary, new_state: Dictionary, weight: float) -> void`:
-  Updates the current state of the node using values interpolated from the
-  old to the new state. This will only be called if "Interpolation" is
-  enabled in project settings.
+- `_interpolate_state(old_state: Dictionary, new_state: Dictionary, weight: float) -> void`：
+  使用从旧状态到新状态插值的值更新节点的当前状态。只有在项目设置中启用了 "插值" 时，才会调用此方法。
 
-- `_get_local_input() -> Dictionary`: Returns the local input that this node
-  needs to operate. This will only be called for nodes whose "network master"
-  (set via `Node.set_network_master()`) matches the peer id of the current
+- `_get_local_input() -> Dictionary`：返回此节点操作所需的本地输入。这只会在 "网络主节点"（通过 `Node.set_network_master()` 设置） matches the peer id of the current
   client. Not all nodes need input, in fact, most do not. This is used most
   commonly on the node representing a player. This input will be passed into
   `_network_process()`.
@@ -955,72 +835,36 @@ section called "Virtual methods" below for more information.)
   you can perform some operations during a frame with more time budget
   to spare (a lot more needs to happen during tick frames).
 
-### Node types ###
+### 节点类型 ###
 
-This addon include a few rollback-aware node types:
+此插件包含一些支持回滚的节点类型：
 
-- `NetworkTimer`: A replacement for the `Timer` node. Unlike `Timer`, it
-  doesn't wait for a number of seconds, but instead a number of ticks
-  (the `wait_ticks` property).
+- `NetworkTimer`：`Timer` 节点的替代品。与 `Timer` 不同，它不等待若干秒，而是等待若干 tick（`wait_ticks` 属性）。
 
-  If `hash_state` is set to false, then the timer's state won't be included
-  in the hash used to detect state mismatches. This is useful if a timer may
-  only run on a single client, rather than on all clients.
+  如果 `hash_state` 设置为 false，则计时器的状态不会包含在用于检测状态不匹配的哈希中。如果计时器可能只在单个客户端上运行，而不是在所有客户端上运行，这很有用。
 
-- `NetworkAnimationPlayer`: Descends from the built-in `AnimationPlayer` but
-  will only move forward each tick (rather than as time passes) and it
-  supports rollback.
+- `NetworkAnimationPlayer`：继承自内置的 `AnimationPlayer`，但只会在每个 tick 前进（而不是随着时间推移），并且支持回滚。
 
-  If `auto_reset` is set to true, it will automatically play the "RESET"
-  animation every time state is loaded without an animation playing. This can
-  help prevent issues where an animation started, but on rollback it's
-  determined that it shouldn't have started, so the animation is left in an
-  in-between state.
+  如果 `auto_reset` 设置为 true，它将在每次加载没有动画播放的状态时自动播放 "RESET" 动画。这有助于防止动画开始，但在回滚时确定它不应该开始，导致动画处于中间状态的问题。
 
-- `NetworkRandomNumberGenerator`: For generating random numbers in a
-  deterministic way that supports rollback. At the start of the match, the
-  clients need to initialize the node with the same seed. Each time a random
-  number is generated, it's internal state will change in a deterministic way,
-  such that the sequence of numbers it generates on each client will be the
-  same. When a rollback happens, it's internal state will rollback such that
-  it'll generate the same sequence of numbers again.
+- `NetworkRandomNumberGenerator`：用于以支持回滚的确定性方式生成随机数。在比赛开始时，客户端需要使用相同的种子初始化节点。每次生成随机数时，其内部状态都会以确定性方式更改，使得它在每个客户端上生成的数字序列相同。当回滚发生时，其内部状态将回滚，从而再次生成相同的数字序列。
 
-  One way to avoid having to share a seed for every
-  `NetworkRandomNumberGenerator` in the game, is to share a single "mother
-  seed" which is used for one `NetworkRandomNumberGenerator` that
-  generates all the other seeds the game needs. I like to call this the
-  "Johnny Appleseed approach" where "Johnny" is distributing seeds grown from
-  the "mother seed". This will work so long as the nodes are always initialized
-  in a deterministic order!
+  避免为游戏中的每个 `NetworkRandomNumberGenerator` 共享种子的一种方法是共享单个 "母种子"，该种子用于一个 `NetworkRandomNumberGenerator`，该生成器生成游戏所需的所有其他种子。我喜欢将此称为 "Johnny Appleseed 方法"，其中 "Johnny" 分发从 "母种子" 生长的种子。只要节点始终以确定性顺序初始化，这就会起作用！
 
-### Virtual methods ###
+### 虚拟方法 ###
 
-For a node to participate in rollback, it must be in the "network_sync" group,
-which will cause `SyncManager` to call various virtual methods on the node:
+要让节点参与回滚，它必须位于 "network_sync" 组中，这将导致 `SyncManager` 在节点上调用各种虚拟方法：
 
-- `_save_state() -> Dictionary`: Returns the current node state. This same
-  state will be passed to `_load_state()` when performing a rollback.
+- `_save_state() -> Dictionary`：返回当前节点状态。执行回滚时，此相同状态将传递给 `_load_state()`。
 
-  _Warning: Don't put any `Reference`s, `Object`s, `Array`s or `Dictionary`s
-  into state, unless you can duplicate them first. This is because changing
-  the object later will change the data in the state buffer too. And NEVER
-  put `Node`s in state, instead use the node path, or some other way to
-  locate the right node later, since the original node may no longer even
-  exist. Any `Object`s put into state will need special support in your
-  `HashSerializer` (see below) to prevent incorrectly detecting state
-  mismatches._
+  _警告：不要将任何 `Reference`、`Object`、`Array` 或 `Dictionary` 放入状态中，除非您可以先复制它们。这是因为稍后更改对象也会更改状态缓冲区中的数据。并且永远不要将 `Node` 放入状态中，而是使用节点路径或其他方式在以后定位正确的节点，因为原始节点可能不再存在。放入状态中的任何 `Object` 都需要在您的 `HashSerializer`（见下文）中提供特殊支持，以防止错误地检测到状态不匹配。_
 
-- `_load_state(state: Dictionary) -> void`: Called to roll the node back to a
-  previous state, which originated from this node's `_save_state()` method.
+- `_load_state(state: Dictionary) -> void`：调用以将节点回滚到之前的状态，该状态源自此节点的 `_save_state()` 方法。
 
-- `_interpolate_state(old_state: Dictionary, new_state: Dictionary, weight: float) -> void`:
-  Updates the current state of the node using values interpolated from the
-  old to the new state. This will only be called if "Interpolation" is
-  enabled in project settings.
+- `_interpolate_state(old_state: Dictionary, new_state: Dictionary, weight: float) -> void`：
+  使用从旧状态到新状态插值的值更新节点的当前状态。只有在项目设置中启用了 "插值" 时，才会调用此方法。
 
-- `_get_local_input() -> Dictionary`: Returns the local input that this node
-  needs to operate. This will only be called for nodes whose "network master"
-  (set via `Node.set_network_master()`) matches the peer id of the current
+- `_get_local_input() -> Dictionary`：返回此节点操作所需的本地输入。这只会在 "网络主节点"（通过 `Node.set_network_master()` 设置） matches the peer id of the current
   client. Not all nodes need input, in fact, most do not. This is used most
   commonly on the node representing a player. This input will be passed into
   `_network_process()`.
