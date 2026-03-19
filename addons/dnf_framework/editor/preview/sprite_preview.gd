@@ -29,12 +29,23 @@ func _draw() -> void:
 	if not animation_data:
 		return
 
-	var atlas: Texture2D = animation_data.atlas if "atlas" in animation_data else null
-	if not atlas:
-		return
-
 	var frame_data = _get_frame_at_logical(current_frame)
 	if not frame_data:
+		return
+
+	## 优先使用每帧独立纹理
+	var per_frame_tex: Texture2D = frame_data.texture if "texture" in frame_data else null
+	if per_frame_tex:
+		var src_size := Vector2(per_frame_tex.get_width(), per_frame_tex.get_height())
+		var scale_factor := minf((width - 4) / src_size.x, (height - 4) / src_size.y)
+		var draw_size := src_size * scale_factor
+		var draw_pos := (Vector2(width, height) - draw_size) * 0.5
+		draw_texture_rect(per_frame_tex, Rect2(draw_pos, draw_size), false)
+		return
+
+	## 回退到 atlas + region 模式
+	var atlas: Texture2D = animation_data.atlas if "atlas" in animation_data else null
+	if not atlas:
 		return
 
 	var region: Rect2 = frame_data.region

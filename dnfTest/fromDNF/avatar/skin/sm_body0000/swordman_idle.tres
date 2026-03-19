@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="DNFAnimationData" format=3 uid="uid://b3qrnpn5wtjos"]
+
+[ext_resource type="Script" uid="uid://csed6ayvex88n" path="res://addons/dnf_framework/resources/animation/frame_data.gd" id="1_iabkc"]
+[ext_resource type="Texture2D" uid="uid://cl6ihmkymcfqe" path="res://dnfTest/fromDNF/avatar/skin/sm_body0000/0094.png" id="2_qopog"]
+[ext_resource type="Texture2D" uid="uid://c04lt22l2nujn" path="res://dnfTest/fromDNF/avatar/skin/sm_body0000/0095.png" id="3_2wt08"]
+[ext_resource type="Texture2D" uid="uid://c0n8pt2ow8qnr" path="res://dnfTest/fromDNF/avatar/skin/sm_body0000/0096.png" id="4_4dta2"]
+[ext_resource type="Texture2D" uid="uid://c0vp01wlrca4c" path="res://dnfTest/fromDNF/avatar/skin/sm_body0000/0097.png" id="5_w1yv3"]
+[ext_resource type="Script" uid="uid://chylfvq28pint" path="res://addons/dnf_framework/resources/animation/animation_data.gd" id="6_fkwc0"]
+
+[sub_resource type="Resource" id="Resource_npjxw"]
+script = ExtResource("1_iabkc")
+texture = ExtResource("2_qopog")
+
+[sub_resource type="Resource" id="Resource_w08mu"]
+script = ExtResource("1_iabkc")
+texture = ExtResource("3_2wt08")
+
+[sub_resource type="Resource" id="Resource_f6c10"]
+script = ExtResource("1_iabkc")
+texture = ExtResource("4_4dta2")
+
+[sub_resource type="Resource" id="Resource_4e16k"]
+script = ExtResource("1_iabkc")
+texture = ExtResource("5_w1yv3")
+
+[resource]
+script = ExtResource("6_fkwc0")
+anim_name = "swordman_idle"
+fps = 4
+frames = [SubResource("Resource_npjxw"), SubResource("Resource_w08mu"), SubResource("Resource_f6c10"), SubResource("Resource_4e16k")]
+loop = true

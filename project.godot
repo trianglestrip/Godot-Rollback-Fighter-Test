@@ -15,13 +15,13 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 [application]
 
 config/name="Delta Rollback"
-run/main_scene="res://demo-fighting/Main-Fighting.tscn"
+run/main_scene="res://dnfTest/DnfTestMain.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
 
 [autoload]
 
-SyncManager="*uid://veey81akvb6b"
+SyncManager="*uid://byk6cdsxb8o8d"
 SyncReplay="*res://addons/delta_rollback/SyncReplay.gd"
 MCPGameBridge="res://addons/godot_mcp/game_bridge/mcp_game_bridge.gd"
 
@@ -37,8 +37,8 @@ enabled=PackedStringArray("res://addons/delta_rollback/plugin.cfg", "res://addon
 
 bind_mode=0
 custom_bind_ip=""
-port_override_enabled=false
-port_override=6550
+port_override_enabled=true
+port_override=6008
 
 [importer_defaults]
 

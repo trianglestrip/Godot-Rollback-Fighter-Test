@@ -209,4 +209,3 @@ func _on_ResetButton_pressed() -> void:
 func setup_match_for_replay(my_peer_id: int, peer_ids: Array, _match_info: Dictionary) -> void:
 	# 由于我们移除了ClientPlayer，这个函数现在不需要做任何事情
 	pass
-

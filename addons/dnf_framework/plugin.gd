@@ -5,6 +5,7 @@ var _inspector_plugin: EditorInspectorPlugin
 var _timeline_panel: Control
 var _skill_editor_panel: Control
 var _character_editor_panel: Control
+var _animation_editor_panel: Control
 
 
 func _enter_tree() -> void:
@@ -56,6 +57,11 @@ func _enter_tree() -> void:
 		preload("res://addons/dnf_framework/runtime/skill/skill_component_v2.gd"),
 		null
 	)
+	add_custom_type(
+		"DNFAnimationPreview", "Node2D",
+		preload("res://addons/dnf_framework/runtime/frame/animation_preview.gd"),
+		null
+	)
 
 	# Phase 10-11: 编辑器面板
 	var inspector_script = load("res://addons/dnf_framework/editor/inspectors/dnf_inspector_plugin.gd")
@@ -84,6 +90,13 @@ func _enter_tree() -> void:
 		_character_editor_panel.name = "DNF 角色编辑器"
 		add_control_to_bottom_panel(_character_editor_panel, "DNF 角色")
 
+	var anim_editor_script = load("res://addons/dnf_framework/editor/panels/animation_editor.gd")
+	if anim_editor_script:
+		_animation_editor_panel = Control.new()
+		_animation_editor_panel.set_script(anim_editor_script)
+		_animation_editor_panel.name = "DNF 动画编辑器"
+		add_control_to_bottom_panel(_animation_editor_panel, "DNF 动画")
+
 
 func _exit_tree() -> void:
 	remove_custom_type("FrameAnimationPlayer")
@@ -95,6 +108,7 @@ func _exit_tree() -> void:
 	remove_custom_type("DNFHitboxComponent")
 	remove_custom_type("DNFHurtboxComponent")
 	remove_custom_type("DNFSkillComponentV2")
+	remove_custom_type("DNFAnimationPreview")
 
 	if _inspector_plugin:
 		remove_inspector_plugin(_inspector_plugin)
@@ -114,3 +128,8 @@ func _exit_tree() -> void:
 		remove_control_from_bottom_panel(_character_editor_panel)
 		_character_editor_panel.queue_free()
 		_character_editor_panel = null
+
+	if _animation_editor_panel:
+		remove_control_from_bottom_panel(_animation_editor_panel)
+		_animation_editor_panel.queue_free()
+		_animation_editor_panel = null

@@ -1,12 +1,12 @@
 [gd_scene format=3 uid="uid://bnjcpqgueo6s5"]
 
-[ext_resource type="Script" uid="uid://vauj5mqfebu0" path="res://demo-fighting/Main.gd" id="1_adh32"]
+[ext_resource type="Script" uid="uid://cpneju71od04" path="res://demo-fighting/Main.gd" id="1_adh32"]
 [ext_resource type="FontFile" uid="uid://va7ac8iahrws" path="res://assets/monogram_extended.ttf" id="2_dfey0"]
-[ext_resource type="Script" uid="uid://intejeu63527" path="res://demo-fighting/scripts/FightManager.gd" id="3_yyshs"]
+[ext_resource type="Script" uid="uid://ss8lu4yd6e8p" path="res://demo-fighting/scripts/FightManager.gd" id="3_yyshs"]
 [ext_resource type="Script" uid="uid://b4u2wfjkeqnop" path="res://addons/delta_rollback/NetworkTimer.gd" id="4_0f5y5"]
 [ext_resource type="PackedScene" uid="uid://b8j8obrvlqulg" path="res://demo-fighting/fighter.tscn" id="4_2ampb"]
 [ext_resource type="Texture2D" uid="uid://y2qiqet2veue" path="res://assets/godot.png" id="5_ymjv0"]
-[ext_resource type="Script" path="res://demo-fighting/scripts/EnemyManager.gd" id="6_enemymanager"]
+[ext_resource type="Script" uid="uid://bchf0dj8y4ho2" path="res://demo-fighting/scripts/EnemyManager.gd" id="6_enemymanager"]
 
 [sub_resource type="FontFile" id="1"]
 fallbacks = Array[Font]([ExtResource("2_dfey0")])
@@ -372,10 +372,9 @@ modulate = Color(0.403922, 1, 0.415686, 1)
 
 [node name="SpawnParent" type="SGFixedNode2D" parent="." unique_id=347195281]
 
-[node name="EnemyManager" type="Node2D" parent="."]
+[node name="EnemyManager" type="Node2D" parent="." unique_id=860194416]
 script = ExtResource("6_enemymanager")
 enemy_scene = ExtResource("4_2ampb")
-max_enemies = 5
 
 [connection signal="pressed" from="CanvasLayer/MainMenu/LocalButton" to="." method="_on_LocalButton_pressed"]
 [connection signal="pressed" from="CanvasLayer/MainMenu/OnlineButton" to="." method="_on_OnlineButton_pressed"]

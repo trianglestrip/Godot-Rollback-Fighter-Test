@@ -1,0 +1,46 @@
+[gd_resource type="Resource" script_class="DNFAnimationData" format=3 uid="uid://cf5jalxn1rtpp"]
+
+[ext_resource type="Script" uid="uid://csed6ayvex88n" path="res://addons/dnf_framework/resources/animation/frame_data.gd" id="1_xc5gw"]
+[ext_resource type="Texture2D" uid="uid://cpxhfp023h84u" path="res://dnfTest/fromDNF/avatar/skin/sm_body0000/0039.png" id="2_eohvi"]
+[ext_resource type="Texture2D" uid="uid://7h66nmlnkj8n" path="res://dnfTest/fromDNF/avatar/skin/sm_body0000/0040.png" id="3_ej8rm"]
+[ext_resource type="Texture2D" uid="uid://cfbuwedixpipe" path="res://dnfTest/fromDNF/avatar/skin/sm_body0000/0041.png" id="4_75hvm"]
+[ext_resource type="Texture2D" uid="uid://cad565m3judhr" path="res://dnfTest/fromDNF/avatar/skin/sm_body0000/0042.png" id="5_u1gs6"]
+[ext_resource type="Texture2D" uid="uid://jjhf1uyerqnt" path="res://dnfTest/fromDNF/avatar/skin/sm_body0000/0043.png" id="6_gtirp"]
+[ext_resource type="Texture2D" uid="uid://co7cvgyt2qdfm" path="res://dnfTest/fromDNF/avatar/skin/sm_body0000/0044.png" id="7_88efb"]
+[ext_resource type="Script" uid="uid://chylfvq28pint" path="res://addons/dnf_framework/resources/animation/animation_data.gd" id="8_d723k"]
+
+[sub_resource type="Resource" id="Resource_yvg37"]
+script = ExtResource("1_xc5gw")
+duration = 3
+texture = ExtResource("2_eohvi")
+
+[sub_resource type="Resource" id="Resource_k7k2p"]
+script = ExtResource("1_xc5gw")
+duration = 3
+texture = ExtResource("3_ej8rm")
+
+[sub_resource type="Resource" id="Resource_5hcqp"]
+script = ExtResource("1_xc5gw")
+duration = 3
+texture = ExtResource("4_75hvm")
+
+[sub_resource type="Resource" id="Resource_h42ub"]
+script = ExtResource("1_xc5gw")
+duration = 3
+texture = ExtResource("5_u1gs6")
+
+[sub_resource type="Resource" id="Resource_eldao"]
+script = ExtResource("1_xc5gw")
+duration = 3
+texture = ExtResource("6_gtirp")
+
+[sub_resource type="Resource" id="Resource_h2gn3"]
+script = ExtResource("1_xc5gw")
+duration = 3
+texture = ExtResource("7_88efb")
+
+[resource]
+script = ExtResource("8_d723k")
+anim_name = "swordman_idle"
+frames = [SubResource("Resource_yvg37"), SubResource("Resource_k7k2p"), SubResource("Resource_5hcqp"), SubResource("Resource_h42ub"), SubResource("Resource_eldao"), SubResource("Resource_h2gn3")]
+loop = true
