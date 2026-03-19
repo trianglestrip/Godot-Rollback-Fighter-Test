@@ -51,4 +51,3 @@ test_*.gd
 verify_*.ps1
 run_test.bat
 auto_test.ps1
-plan.md
