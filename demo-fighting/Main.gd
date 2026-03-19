@@ -137,7 +137,6 @@ func _on_peer_disconnected(peer_id: int):
 	SyncManager.remove_peer(peer_id)
 
 func _on_server_connected() -> void:
-	$ClientPlayer.set_multiplayer_authority(multiplayer.get_unique_id())
 	SyncManager.add_peer(1)
 	# Tell server about ourselves.
 	register_player.rpc_id(1, {})
@@ -151,8 +150,6 @@ func register_player(options: Dictionary = {}) -> void:
 	if not peer_id == SyncManager.network_adaptor.get_network_unique_id():
 		SyncManager.add_peer(peer_id)
 		var peer = SyncManager.peers[peer_id]
-
-	$ClientPlayer.set_multiplayer_authority(peer_id)
 
 	if multiplayer.is_server():
 		multiplayer.multiplayer_peer.refuse_new_connections = true
@@ -210,10 +207,6 @@ func _on_ResetButton_pressed() -> void:
 	get_tree().reload_current_scene()
 
 func setup_match_for_replay(my_peer_id: int, peer_ids: Array, _match_info: Dictionary) -> void:
-	var client_peer_id: int
-	if my_peer_id == 1:
-		client_peer_id = peer_ids[0] if len(peer_ids) > 0 else 1
-	else:
-		client_peer_id = my_peer_id
-	$ClientPlayer.set_multiplayer_authority(client_peer_id)
+	# 由于我们移除了ClientPlayer，这个函数现在不需要做任何事情
+	pass
 
