@@ -13,6 +13,7 @@ const AttackPhaseRes = preload("res://addons/dnf_framework/resources/skill/attac
 const MovementPhaseRes = preload("res://addons/dnf_framework/resources/skill/movement_phase.gd")
 const HitboxDataRes = preload("res://addons/dnf_framework/resources/combat/hitbox_data.gd")
 const HitBehaviorRes = preload("res://addons/dnf_framework/runtime/combat/hit_behavior.gd")
+const EffectLayerRes = preload("res://addons/dnf_framework/resources/skill/effect_layer.gd")
 
 var _current_skill: Resource
 var _character_data: Resource
@@ -22,6 +23,13 @@ var _skill_list_items: Array = []
 var _skill_list: ItemList
 var _skill_name_edit: LineEdit
 var _display_name_edit: LineEdit
+
+## 弹窗
+var _delete_confirm_dialog: ConfirmationDialog
+var _rename_dialog: AcceptDialog
+var _rename_line_edit: LineEdit
+var _rename_skill_index: int = -1
+var _anim_popup: PopupMenu
 
 ## 中间面板
 var _preview_container: Control
@@ -55,6 +63,10 @@ var _priority_spin: SpinBox
 ## Inspector 动态面板（选中 Phase/Event/Movement 时替换）
 var _dynamic_inspector: VBoxContainer
 
+## 特效层 Inspector
+var _effect_layer_list: ItemList
+var _effect_layer_inspector: VBoxContainer
+
 ## 当前选中的轨道元素
 var _selected_type: String = ""
 var _selected_resource: Resource
@@ -84,6 +96,8 @@ func _build_ui() -> void:
 	_build_center_panel(center_right)
 	_build_right_panel(center_right)
 
+	_build_dialogs()
+
 
 ## ==================== 左侧：技能列表 ====================
 func _build_left_panel(parent: Control) -> void:
@@ -99,6 +113,7 @@ func _build_left_panel(parent: Control) -> void:
 	_skill_list = ItemList.new()
 	_skill_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_skill_list.item_selected.connect(_on_skill_list_selected)
+	_skill_list.item_activated.connect(_on_skill_list_double_clicked)
 	left.add_child(_skill_list)
 
 	var name_row := HBoxContainer.new()
@@ -344,6 +359,10 @@ func _build_skill_properties() -> void:
 	_dynamic_inspector = VBoxContainer.new()
 	_inspector_container.add_child(_dynamic_inspector)
 
+	## 特效层
+	_inspector_container.add_child(HSeparator.new())
+	_build_effect_layer_section()
+
 
 ## ==================== 工具函数 ====================
 func _make_group(title: String) -> VBoxContainer:
@@ -365,6 +384,55 @@ func _make_row(label_text: String, control: Control) -> HBoxContainer:
 	control.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(control)
 	return row
+
+
+func _build_dialogs() -> void:
+	_delete_confirm_dialog = ConfirmationDialog.new()
+	_delete_confirm_dialog.title = "删除技能"
+	_delete_confirm_dialog.dialog_text = "确定要删除此技能吗？"
+	_delete_confirm_dialog.confirmed.connect(_do_delete_skill)
+	add_child(_delete_confirm_dialog)
+
+	_rename_dialog = AcceptDialog.new()
+	_rename_dialog.title = "重命名技能"
+	_rename_dialog.size = Vector2i(300, 100)
+	_rename_line_edit = LineEdit.new()
+	_rename_line_edit.placeholder_text = "输入新技能名..."
+	_rename_dialog.add_child(_rename_line_edit)
+	_rename_dialog.confirmed.connect(_do_rename_skill)
+	_rename_line_edit.text_submitted.connect(func(_t: String) -> void:
+		_rename_dialog.hide()
+		_do_rename_skill()
+	)
+	add_child(_rename_dialog)
+
+	_anim_popup = PopupMenu.new()
+	_anim_popup.id_pressed.connect(_on_anim_popup_selected)
+	add_child(_anim_popup)
+
+
+func _build_effect_layer_section() -> void:
+	var group := _make_group("特效层")
+	_inspector_container.add_child(group)
+
+	_effect_layer_list = ItemList.new()
+	_effect_layer_list.custom_minimum_size.y = 60
+	_effect_layer_list.item_selected.connect(_on_effect_layer_selected)
+	group.add_child(_effect_layer_list)
+
+	var btns := HBoxContainer.new()
+	group.add_child(btns)
+	var btn_add := Button.new()
+	btn_add.text = "+ 特效层"
+	btn_add.pressed.connect(_on_add_effect_layer)
+	btns.add_child(btn_add)
+	var btn_del := Button.new()
+	btn_del.text = "- 删除"
+	btn_del.pressed.connect(_on_delete_effect_layer)
+	btns.add_child(btn_del)
+
+	_effect_layer_inspector = VBoxContainer.new()
+	group.add_child(_effect_layer_inspector)
 
 
 ## ==================== 数据加载 ====================
@@ -389,6 +457,8 @@ func load_skills_from_character(char_data: Resource) -> void:
 	if char_data and char_data.get("skills"):
 		for s in char_data.skills:
 			_skill_list_items.append(s)
+	if _sprite_preview and char_data and "sprite_frames" in char_data:
+		_sprite_preview.sprite_frames = char_data.sprite_frames
 	_refresh_skill_list()
 
 
@@ -466,6 +536,7 @@ func _refresh_properties() -> void:
 		_anim_bind_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
 
 	_clear_dynamic_inspector()
+	_refresh_effect_layer_list()
 
 
 func _sync_timeline() -> void:
@@ -478,12 +549,18 @@ func _sync_preview() -> void:
 		if _sprite_preview:
 			_sprite_preview.sprite_frames = null
 			_sprite_preview.animation_name = ""
+			_sprite_preview.effect_layers = []
+			_sprite_preview.skill_data = null
 		if _hitbox_preview:
 			_hitbox_preview.skill_data = null
 		return
 
 	if _sprite_preview:
+		if _character_data and "sprite_frames" in _character_data:
+			_sprite_preview.sprite_frames = _character_data.sprite_frames
 		_sprite_preview.animation_name = _current_skill.animation_name if "animation_name" in _current_skill else ""
+		_sprite_preview.skill_data = _current_skill
+		_sprite_preview.effect_layers = _current_skill.effect_layers if "effect_layers" in _current_skill else []
 		_sprite_preview.current_frame = 0
 	if _hitbox_preview:
 		_hitbox_preview.skill_data = _current_skill
@@ -1000,6 +1077,16 @@ func _on_new_skill() -> void:
 func _on_delete_skill() -> void:
 	if _current_skill == null:
 		return
+	var skill_name: String = _current_skill.skill_name
+	if skill_name.is_empty():
+		skill_name = "未命名技能"
+	_delete_confirm_dialog.dialog_text = "确定要删除技能「%s」吗？" % skill_name
+	_delete_confirm_dialog.popup_centered()
+
+
+func _do_delete_skill() -> void:
+	if _current_skill == null:
+		return
 	var idx := _skill_list_items.find(_current_skill)
 	if idx >= 0:
 		_skill_list_items.remove_at(idx)
@@ -1008,13 +1095,41 @@ func _on_delete_skill() -> void:
 			var skill_idx := skills_arr.find(_current_skill)
 			if skill_idx >= 0:
 				skills_arr.remove_at(skill_idx)
-		_current_skill = _skill_list_items[0] if _skill_list_items.size() > 0 else null
+		var new_idx := mini(idx, _skill_list_items.size() - 1)
+		_current_skill = _skill_list_items[new_idx] if new_idx >= 0 else null
 		_refresh_skill_list()
+		if new_idx >= 0:
+			_skill_list.select(new_idx)
 		_refresh_properties()
 		_sync_timeline()
 		_sync_preview()
 		if _current_skill:
 			skill_selected.emit(_current_skill)
+
+
+func _on_skill_list_double_clicked(idx: int) -> void:
+	if idx < 0 or idx >= _skill_list_items.size():
+		return
+	_rename_skill_index = idx
+	var skill = _skill_list_items[idx]
+	_rename_line_edit.text = skill.skill_name
+	_rename_dialog.popup_centered()
+	_rename_line_edit.select_all()
+	_rename_line_edit.grab_focus()
+
+
+func _do_rename_skill() -> void:
+	if _rename_skill_index < 0 or _rename_skill_index >= _skill_list_items.size():
+		return
+	var new_name := _rename_line_edit.text.strip_edges()
+	if new_name.is_empty():
+		return
+	var skill = _skill_list_items[_rename_skill_index]
+	skill.skill_name = new_name
+	_skill_list.set_item_text(_rename_skill_index, new_name)
+	if skill == _current_skill:
+		_skill_name_edit.text = new_name
+	_rename_skill_index = -1
 
 
 func _on_save() -> void:
@@ -1046,8 +1161,49 @@ func _on_pick_icon() -> void:
 func _on_pick_animation() -> void:
 	if not _current_skill:
 		return
-	# EditorFileDialog 需在主插件协调
-	pass
+	_show_anim_popup(_anim_popup, _anim_bind_btn, _on_anim_popup_selected)
+
+
+func _show_anim_popup(popup: PopupMenu, anchor: Control, _callback: Callable) -> void:
+	popup.clear()
+	var sf := _get_sprite_frames()
+	if sf == null:
+		popup.add_item("(无 SpriteFrames)", -1)
+		popup.set_item_disabled(0, true)
+	else:
+		var names: PackedStringArray = sf.get_animation_names()
+		for i in range(names.size()):
+			popup.add_item(names[i], i)
+		if names.is_empty():
+			popup.add_item("(无动画)", -1)
+			popup.set_item_disabled(0, true)
+	var pos := anchor.global_position + Vector2(0, anchor.size.y)
+	popup.position = Vector2i(int(pos.x), int(pos.y))
+	popup.popup()
+
+
+func _on_anim_popup_selected(id: int) -> void:
+	if id < 0 or not _current_skill:
+		return
+	var sf := _get_sprite_frames()
+	if sf == null:
+		return
+	var names: PackedStringArray = sf.get_animation_names()
+	if id >= names.size():
+		return
+	var anim_name: String = names[id]
+	_current_skill.animation_name = anim_name
+	_current_skill.total_frames = sf.get_frame_count(anim_name)
+	_anim_bind_label.text = anim_name
+	_anim_bind_label.add_theme_color_override("font_color", Color(0.5, 0.9, 0.5))
+	_sync_timeline()
+	_sync_preview()
+
+
+func _get_sprite_frames() -> SpriteFrames:
+	if _character_data and "sprite_frames" in _character_data:
+		return _character_data.sprite_frames as SpriteFrames
+	return null
 
 
 ## ==================== 属性回调 ====================
@@ -1127,3 +1283,304 @@ func _on_air_usable_toggled(pressed: bool) -> void:
 func _on_priority_changed(val: float) -> void:
 	if _current_skill:
 		_current_skill.priority = int(val)
+
+
+## ==================== 特效层操作 ====================
+func _refresh_effect_layer_list() -> void:
+	if not _effect_layer_list:
+		return
+	_effect_layer_list.clear()
+	_clear_effect_layer_inspector()
+	if not _current_skill or not "effect_layers" in _current_skill:
+		return
+	var layers: Array = _current_skill.effect_layers
+	for i in range(layers.size()):
+		var layer = layers[i]
+		var name_str: String = layer.layer_name if layer else ""
+		if name_str.is_empty():
+			name_str = "特效层 %d" % (i + 1)
+		_effect_layer_list.add_item(name_str)
+
+
+func _on_add_effect_layer() -> void:
+	if not _current_skill:
+		return
+	if not "effect_layers" in _current_skill:
+		return
+	var layer := EffectLayerRes.new()
+	layer.layer_name = "effect_%d" % _current_skill.effect_layers.size()
+	_current_skill.effect_layers.append(layer)
+	_refresh_effect_layer_list()
+	_sync_preview()
+
+
+func _on_delete_effect_layer() -> void:
+	if not _current_skill or not "effect_layers" in _current_skill:
+		return
+	var selected := _effect_layer_list.get_selected_items()
+	if selected.is_empty():
+		return
+	var idx: int = selected[0]
+	if idx >= 0 and idx < _current_skill.effect_layers.size():
+		_current_skill.effect_layers.remove_at(idx)
+		_refresh_effect_layer_list()
+		_sync_preview()
+
+
+func _on_effect_layer_selected(idx: int) -> void:
+	if not _current_skill or not "effect_layers" in _current_skill:
+		return
+	if idx < 0 or idx >= _current_skill.effect_layers.size():
+		return
+	_show_effect_layer_inspector(_current_skill.effect_layers[idx], idx)
+
+
+func _clear_effect_layer_inspector() -> void:
+	if _effect_layer_inspector:
+		for c in _effect_layer_inspector.get_children():
+			c.queue_free()
+
+
+func _show_effect_layer_inspector(layer: Resource, idx: int) -> void:
+	_clear_effect_layer_inspector()
+	if not layer:
+		return
+
+	var title := Label.new()
+	title.text = "特效层 #%d" % idx
+	title.add_theme_font_size_override("font_size", 13)
+	title.add_theme_color_override("font_color", Color(0.4, 0.8, 1.0))
+	_effect_layer_inspector.add_child(title)
+
+	var name_edit := LineEdit.new()
+	name_edit.text = layer.layer_name
+	name_edit.text_changed.connect(func(t: String) -> void:
+		layer.layer_name = t
+		if idx < _effect_layer_list.item_count:
+			_effect_layer_list.set_item_text(idx, t if not t.is_empty() else "特效层 %d" % (idx + 1))
+	)
+	_effect_layer_inspector.add_child(_make_row("层名称", name_edit))
+
+	## 动画绑定
+	var anim_row := HBoxContainer.new()
+	_effect_layer_inspector.add_child(anim_row)
+	var anim_lbl := Label.new()
+	anim_lbl.text = "动画:"
+	anim_lbl.custom_minimum_size.x = 80
+	anim_row.add_child(anim_lbl)
+	var anim_name_lbl := Label.new()
+	anim_name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	if layer.animation_name.is_empty():
+		anim_name_lbl.text = "(未绑定)"
+		anim_name_lbl.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+	else:
+		anim_name_lbl.text = layer.animation_name
+		anim_name_lbl.add_theme_color_override("font_color", Color(0.5, 0.9, 0.5))
+	anim_row.add_child(anim_name_lbl)
+
+	var effect_anim_popup := PopupMenu.new()
+	add_child(effect_anim_popup)
+	var anim_btn := Button.new()
+	anim_btn.text = "绑定..."
+	anim_btn.pressed.connect(func() -> void:
+		_show_anim_popup(effect_anim_popup, anim_btn, Callable())
+	)
+	anim_row.add_child(anim_btn)
+	effect_anim_popup.id_pressed.connect(func(anim_id: int) -> void:
+		var sf := _get_sprite_frames()
+		if sf == null or anim_id < 0:
+			return
+		var names: PackedStringArray = sf.get_animation_names()
+		if anim_id >= names.size():
+			return
+		layer.animation_name = names[anim_id]
+		anim_name_lbl.text = layer.animation_name
+		anim_name_lbl.add_theme_color_override("font_color", Color(0.5, 0.9, 0.5))
+		_sync_preview()
+	)
+
+	var spawn_spin := SpinBox.new()
+	spawn_spin.min_value = 0
+	spawn_spin.max_value = 9999
+	spawn_spin.value = layer.spawn_frame
+	spawn_spin.value_changed.connect(func(v: float) -> void:
+		layer.spawn_frame = int(v)
+		_sync_preview()
+	)
+	_effect_layer_inspector.add_child(_make_row("生成帧", spawn_spin))
+
+	var off_x := SpinBox.new()
+	off_x.min_value = -9999
+	off_x.max_value = 9999
+	off_x.value = layer.offset.x
+	off_x.value_changed.connect(func(v: float) -> void:
+		layer.offset.x = v
+		_sync_preview()
+	)
+	_effect_layer_inspector.add_child(_make_row("偏移X", off_x))
+
+	var off_y := SpinBox.new()
+	off_y.min_value = -9999
+	off_y.max_value = 9999
+	off_y.value = layer.offset.y
+	off_y.value_changed.connect(func(v: float) -> void:
+		layer.offset.y = v
+		_sync_preview()
+	)
+	_effect_layer_inspector.add_child(_make_row("偏移Y", off_y))
+
+	var facing_check := CheckBox.new()
+	facing_check.text = "相对朝向"
+	facing_check.button_pressed = layer.relative_to_facing
+	facing_check.toggled.connect(func(pressed: bool) -> void:
+		layer.relative_to_facing = pressed
+	)
+	_effect_layer_inspector.add_child(facing_check)
+
+	var follow_check := CheckBox.new()
+	follow_check.text = "跟随角色"
+	follow_check.button_pressed = layer.follow_character
+	follow_check.toggled.connect(func(pressed: bool) -> void:
+		layer.follow_character = pressed
+	)
+	_effect_layer_inspector.add_child(follow_check)
+
+	## 碰撞（可选）
+	_effect_layer_inspector.add_child(HSeparator.new())
+	var hb_title := Label.new()
+	hb_title.text = "碰撞（可选）"
+	hb_title.add_theme_color_override("font_color", Color(1.0, 0.4, 0.4))
+	_effect_layer_inspector.add_child(hb_title)
+
+	var has_hitbox_check := CheckBox.new()
+	has_hitbox_check.text = "启用碰撞"
+	has_hitbox_check.button_pressed = layer.hitbox != null
+	_effect_layer_inspector.add_child(has_hitbox_check)
+
+	var hb_container := VBoxContainer.new()
+	_effect_layer_inspector.add_child(hb_container)
+
+	var _refresh_hb_fields := func() -> void:
+		for c in hb_container.get_children():
+			c.queue_free()
+		if layer.hitbox == null:
+			return
+		var hb: Resource = layer.hitbox
+		var sw := SpinBox.new()
+		sw.min_value = 1
+		sw.max_value = 9999
+		sw.value = hb.shape_size.x
+		sw.value_changed.connect(func(v: float) -> void: hb.shape_size.x = v)
+		hb_container.add_child(_make_row("宽", sw))
+		var sh := SpinBox.new()
+		sh.min_value = 1
+		sh.max_value = 9999
+		sh.value = hb.shape_size.y
+		sh.value_changed.connect(func(v: float) -> void: hb.shape_size.y = v)
+		hb_container.add_child(_make_row("高", sh))
+		var hox := SpinBox.new()
+		hox.min_value = -9999
+		hox.max_value = 9999
+		hox.value = hb.offset.x
+		hox.value_changed.connect(func(v: float) -> void: hb.offset.x = v)
+		hb_container.add_child(_make_row("碰撞偏移X", hox))
+		var hoy := SpinBox.new()
+		hoy.min_value = -9999
+		hoy.max_value = 9999
+		hoy.value = hb.offset.y
+		hoy.value_changed.connect(func(v: float) -> void: hb.offset.y = v)
+		hb_container.add_child(_make_row("碰撞偏移Y", hoy))
+		var hs := SpinBox.new()
+		hs.min_value = 0
+		hs.max_value = 9999
+		hs.value = layer.hitbox_start_frame
+		hs.value_changed.connect(func(v: float) -> void: layer.hitbox_start_frame = int(v))
+		hb_container.add_child(_make_row("碰撞开始帧", hs))
+		var he := SpinBox.new()
+		he.min_value = 0
+		he.max_value = 9999
+		he.value = layer.hitbox_end_frame
+		he.value_changed.connect(func(v: float) -> void: layer.hitbox_end_frame = int(v))
+		hb_container.add_child(_make_row("碰撞结束帧", he))
+
+	_refresh_hb_fields.call()
+
+	has_hitbox_check.toggled.connect(func(pressed: bool) -> void:
+		if pressed:
+			if layer.hitbox == null:
+				layer.hitbox = HitboxDataRes.new()
+			if layer.hit_behavior == null:
+				layer.hit_behavior = HitBehaviorRes.new()
+		else:
+			layer.hitbox = null
+			layer.hit_behavior = null
+		_refresh_hb_fields.call()
+	)
+
+	## 位移
+	_effect_layer_inspector.add_child(HSeparator.new())
+	var mov_title := Label.new()
+	mov_title.text = "飞行位移"
+	mov_title.add_theme_color_override("font_color", Color(0.3, 0.5, 0.9))
+	_effect_layer_inspector.add_child(mov_title)
+
+	var mov_container := VBoxContainer.new()
+	_effect_layer_inspector.add_child(mov_container)
+
+	var _refresh_mov_fields: Callable
+	_refresh_mov_fields = func() -> void:
+		for c in mov_container.get_children():
+			c.queue_free()
+		for mi in range(layer.movement.size()):
+			var mov = layer.movement[mi]
+			var mov_box := VBoxContainer.new()
+			mov_container.add_child(mov_box)
+			var mov_lbl := Label.new()
+			mov_lbl.text = "位移 #%d" % mi
+			mov_lbl.add_theme_font_size_override("font_size", 11)
+			mov_box.add_child(mov_lbl)
+			var ms := SpinBox.new()
+			ms.min_value = 0
+			ms.max_value = 9999
+			ms.value = mov.start_frame
+			ms.value_changed.connect(func(v: float) -> void: mov.start_frame = int(v))
+			mov_box.add_child(_make_row("开始帧", ms))
+			var me := SpinBox.new()
+			me.min_value = 0
+			me.max_value = 9999
+			me.value = mov.end_frame
+			me.value_changed.connect(func(v: float) -> void: mov.end_frame = int(v))
+			mov_box.add_child(_make_row("结束帧", me))
+			var mvx := SpinBox.new()
+			mvx.min_value = -9999
+			mvx.max_value = 9999
+			mvx.value = mov.velocity.x
+			mvx.value_changed.connect(func(v: float) -> void: mov.velocity.x = v)
+			mov_box.add_child(_make_row("速度X", mvx))
+			var mvy := SpinBox.new()
+			mvy.min_value = -9999
+			mvy.max_value = 9999
+			mvy.value = mov.velocity.y
+			mvy.value_changed.connect(func(v: float) -> void: mov.velocity.y = v)
+			mov_box.add_child(_make_row("速度Y", mvy))
+			var del_mov := Button.new()
+			del_mov.text = "删除此位移"
+			del_mov.add_theme_color_override("font_color", Color(1, 0.3, 0.3))
+			var captured_mi := mi
+			del_mov.pressed.connect(func() -> void:
+				if captured_mi < layer.movement.size():
+					layer.movement.remove_at(captured_mi)
+					_refresh_mov_fields.call()
+			)
+			mov_box.add_child(del_mov)
+
+	_refresh_mov_fields.call()
+
+	var add_mov_btn := Button.new()
+	add_mov_btn.text = "+ 添加位移"
+	add_mov_btn.pressed.connect(func() -> void:
+		var new_mov := MovementPhaseRes.new()
+		layer.movement.append(new_mov)
+		_refresh_mov_fields.call()
+	)
+	_effect_layer_inspector.add_child(add_mov_btn)

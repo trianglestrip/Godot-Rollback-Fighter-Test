@@ -105,6 +105,26 @@
 - [x] 11.3 `editor/panels/effect_editor.gd` — 效果事件编辑器
 - [x] 11.4 模板系统 (hitbox_templates.gd 6 种预设)
 
+## Phase 11.5: 编辑器增强 + EffectLayer ✅
+
+### 编辑器增强
+- [x] 11.5.1 技能删除 — ConfirmationDialog 确认弹窗防误删
+- [x] 11.5.2 双击技能名重命名 — item_activated → AcceptDialog + LineEdit
+- [x] 11.5.3 动画绑定 — PopupMenu 下拉选择 SpriteFrames 动画名，自动同步 total_frames + 预览
+- [x] 11.5.4 加载角色时自动将 sprite_frames 传递给 sprite_preview
+
+### EffectLayer 特效层系统
+- [x] 11.5.5 `resources/skill/effect_layer.gd` — DNFEffectLayer（表现+轻量碰撞）
+  - layer_name / animation_name / spawn_frame / offset / follow_character
+  - movement: Array（飞行位移）
+  - hitbox / hit_behavior / hitbox_start_frame / hitbox_end_frame（可选碰撞）
+  - 无 phases / 无 events — 复杂逻辑由 SkillData.events 统一调度
+- [x] 11.5.6 `skill_data_v2.gd` 新增 `effect_layers: Array` + `get_effect_layers_at_frame()`
+- [x] 11.5.7 skill_editor.gd 右侧 Inspector 新增特效层管理 UI
+  - 特效层列表 + 添加/删除
+  - 选中后编辑：层名、动画绑定、spawn_frame、offset、跟随/朝向、碰撞、位移
+- [x] 11.5.8 sprite_preview.gd 多层叠加渲染（主动画 + 特效层半透明叠加）
+
 ## Phase 12: 敌人 AI + 集成示例
 
 - [ ] 12.1 `resources/enemy/enemy_config.gd`

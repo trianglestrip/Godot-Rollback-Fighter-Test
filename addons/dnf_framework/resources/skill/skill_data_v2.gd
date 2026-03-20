@@ -44,6 +44,10 @@ enum SuperArmorLevel { NONE, LIGHT, HEAVY, FULL }
 ## 霸体等级（无/轻霸体/重霸体/完全霸体）
 @export var super_armor_level: SuperArmorLevel = SuperArmorLevel.NONE
 
+@export_group("特效层")
+## 特效层列表（DNFEffectLayer），表现+轻量碰撞，复杂逻辑留在 events
+@export var effect_layers: Array = []
+
 @export_group("取消系统")
 ## 取消窗口列表（DNFCancelWindow），定义可取消的帧区间及允许的目标技能
 @export var cancel_windows: Array = []
@@ -107,6 +111,14 @@ func can_cancel_at_frame(frame: int, target_skill_name: String, has_hit: bool) -
 			if cw.is_skill_allowed(target_skill_name):
 				return true
 	return false
+
+
+func get_effect_layers_at_frame(frame: int) -> Array:
+	var result: Array = []
+	for layer in effect_layers:
+		if frame >= layer.spawn_frame:
+			result.append(layer)
+	return result
 
 
 func check_input(input_dict: Dictionary) -> bool:
