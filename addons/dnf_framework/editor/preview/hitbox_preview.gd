@@ -4,7 +4,7 @@ extends Control
 ## 碰撞体预览 — 在精灵预览上叠加 hitbox/hurtbox 矩形
 ## 根据当前帧所在 phase 绘制 hitbox（红框）和 hurtbox（蓝框）
 
-## 技能数据（DNFSkillDataV2）
+## 技能数据（DNFSkillData）
 var skill_data: Resource:
 	set(v):
 		skill_data = v

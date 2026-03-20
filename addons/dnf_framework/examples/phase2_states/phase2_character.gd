@@ -1,4 +1,4 @@
-extends "res://addons/dnf_framework/state_machine/scripts/dnf_character.gd"
+extends "res://addons/dnf_framework/runtime/character/dnf_character.gd"
 
 ## 阶段二示例：使用状态机的角色
 

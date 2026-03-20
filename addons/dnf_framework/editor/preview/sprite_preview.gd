@@ -1,15 +1,18 @@
 @tool
 extends Control
 
-## 精灵预览 — 显示当前帧的精灵图集区域
-## 从 AnimationData 读取帧数据，绘制 atlas 的 region 区域
+## 精灵预览 — 显示 SpriteFrames 中指定动画的当前帧
 
-## 动画数据（DNFAnimationData）
-var animation_data: Resource:
+var sprite_frames: SpriteFrames:
 	set(v):
-		animation_data = v
+		sprite_frames = v
 		queue_redraw()
-## 当前逻辑帧
+
+var animation_name: String = "":
+	set(v):
+		animation_name = v
+		queue_redraw()
+
 var current_frame: int = 0:
 	set(v):
 		current_frame = v
@@ -26,44 +29,28 @@ func _draw() -> void:
 
 	draw_rect(Rect2(0, 0, width, height), Color(0.15, 0.15, 0.15))
 
-	if not animation_data:
+	if sprite_frames == null or animation_name.is_empty():
+		return
+	if not sprite_frames.has_animation(animation_name):
 		return
 
-	var frame_data = _get_frame_at_logical(current_frame)
-	if not frame_data:
+	var frame_count: int = sprite_frames.get_frame_count(animation_name)
+	if frame_count <= 0:
 		return
 
-	## 优先使用每帧独立纹理
-	var per_frame_tex: Texture2D = frame_data.texture if "texture" in frame_data else null
-	if per_frame_tex:
-		var src_size := Vector2(per_frame_tex.get_width(), per_frame_tex.get_height())
-		var scale_factor := minf((width - 4) / src_size.x, (height - 4) / src_size.y)
-		var draw_size := src_size * scale_factor
-		var draw_pos := (Vector2(width, height) - draw_size) * 0.5
-		draw_texture_rect(per_frame_tex, Rect2(draw_pos, draw_size), false)
+	var idx: int = clampi(current_frame, 0, frame_count - 1)
+	var tex: Texture2D = sprite_frames.get_frame_texture(animation_name, idx)
+	if tex == null:
 		return
 
-	## 回退到 atlas + region 模式
-	var atlas: Texture2D = animation_data.atlas if "atlas" in animation_data else null
-	if not atlas:
+	var src_size := Vector2(tex.get_width(), tex.get_height())
+	if src_size.x <= 0 or src_size.y <= 0:
 		return
 
-	var region: Rect2 = frame_data.region
-	if region.size.x <= 0 or region.size.y <= 0:
-		return
-
-	var src_size := region.size
 	var scale_factor := minf((width - 4) / src_size.x, (height - 4) / src_size.y)
 	var draw_size := src_size * scale_factor
 	var draw_pos := (Vector2(width, height) - draw_size) * 0.5
-
-	draw_texture_rect_region(atlas, Rect2(draw_pos, draw_size), region)
-
-
-func _get_frame_at_logical(logical_frame: int):
-	if not animation_data or not animation_data.has_method("get_frame_at_index"):
-		return null
-	return animation_data.get_frame_at_index(logical_frame)
+	draw_texture_rect(tex, Rect2(draw_pos, draw_size), false)
 
 
 func _notification(what: int) -> void:

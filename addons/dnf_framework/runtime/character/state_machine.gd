@@ -3,16 +3,12 @@ extends Node
 
 ## DNF 状态机：管理状态切换和 tick 推进
 
-const PRELOAD_FIGHTER_STATE = preload("res://addons/dnf_framework/state_machine/scripts/fighter_state.gd")
-
 signal state_changed(new_state: DNFFighterState, old_state: DNFFighterState)
 signal state_tick_advanced(state: DNFFighterState, tick: int)
 signal state_loop_completed(state: DNFFighterState)
 
-## 初始状态
 @export var initial_state: DNFFighterState
 
-## 当前状态（只读）
 var current_state: DNFFighterState
 var current_tick: int = 0
 var _owner_node: Node
@@ -39,7 +35,6 @@ func state_process() -> void:
 		if current_state.state_loop:
 			current_tick = 0
 			state_loop_completed.emit(current_state)
-		# 如果不循环且有状态内切换事件，它应该已经在事件中切换了
 
 
 func transition_to(new_state: DNFFighterState) -> void:

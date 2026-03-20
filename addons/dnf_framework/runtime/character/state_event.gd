@@ -3,10 +3,7 @@ extends Resource
 
 ## 状态事件基类，在指定帧范围内触发
 
-## 事件激活的帧范围 [start, end)，-1 表示无限制
 @export var tick_range: Vector2i = Vector2i(0, -1)
-
-## 是否仅在进入范围的第一帧触发（而非每帧都触发）
 @export var once: bool = false
 
 var _has_fired: bool = false

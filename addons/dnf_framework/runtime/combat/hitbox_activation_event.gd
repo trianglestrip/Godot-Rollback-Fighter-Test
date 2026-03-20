@@ -1,9 +1,7 @@
 class_name DNFHitboxActivationEvent
-extends "res://addons/dnf_framework/state_machine/scripts/state_event.gd"
+extends "res://addons/dnf_framework/runtime/character/state_event.gd"
 
 ## 在 tick_range 范围内激活 hitbox，范围外自动关闭
-
-const PRELOAD_HITBOX = preload("res://addons/dnf_framework/combat/scripts/dnf_hitbox.gd")
 
 @export var hitbox_path: NodePath
 

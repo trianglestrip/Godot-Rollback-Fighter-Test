@@ -3,7 +3,6 @@ extends Resource
 
 ## 输入条件基类：检查当前输入是否满足条件
 
-## 强制通过/拒绝（调试用）
 @export var auto_valid: bool = false
 @export var auto_reject: bool = false
 

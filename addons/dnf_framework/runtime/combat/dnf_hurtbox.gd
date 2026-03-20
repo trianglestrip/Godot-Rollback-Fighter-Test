@@ -3,9 +3,6 @@ extends Area2D
 
 ## 受击判定框
 
-const PRELOAD_HITBOX = preload("res://addons/dnf_framework/combat/scripts/dnf_hitbox.gd")
-const PRELOAD_CHARACTER = preload("res://addons/dnf_framework/state_machine/scripts/dnf_character.gd")
-
 signal got_hit(hitbox: DNFHitbox)
 
 @export var active: bool = true:

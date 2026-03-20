@@ -23,7 +23,6 @@ enum State {
 }
 
 
-## 是否是可操作的状态（可以接受输入切换）
 static func is_actionable(state: State) -> bool:
 	return state in [
 		State.IDLE,
@@ -34,7 +33,6 @@ static func is_actionable(state: State) -> bool:
 	]
 
 
-## 是否是受击/不可控状态
 static func is_hit_state(state: State) -> bool:
 	return state in [
 		State.HIT_STUN,
@@ -45,7 +43,6 @@ static func is_hit_state(state: State) -> bool:
 	]
 
 
-## 是否在空中
 static func is_airborne(state: State) -> bool:
 	return state in [
 		State.JUMP,
@@ -54,7 +51,6 @@ static func is_airborne(state: State) -> bool:
 	]
 
 
-## 是否是攻击状态
 static func is_attacking(state: State) -> bool:
 	return state in [
 		State.ATTACK,
@@ -62,7 +58,6 @@ static func is_attacking(state: State) -> bool:
 	]
 
 
-## 获取状态名称字符串
 static func state_name(state: State) -> String:
 	match state:
 		State.IDLE: return "IDLE"

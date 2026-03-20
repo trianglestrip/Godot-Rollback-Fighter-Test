@@ -2,6 +2,7 @@ class_name DNFAttackPhase
 extends Resource
 
 ## 攻击区间 — 一段帧区间共享一个碰撞体和受击行为
+## 不含事件（事件统一在 SkillData.events 中管理）
 
 ## 攻击判定开始帧
 @export var start_frame: int = 0
@@ -11,8 +12,6 @@ extends Resource
 @export var hitbox: Resource
 ## 受击行为（DNFHitBehavior）
 @export var hit_behavior: Resource
-## 该区间内的帧事件（DNFFrameEvent）
-@export var events: Array = []
 
 
 func contains_frame(frame: int) -> bool:

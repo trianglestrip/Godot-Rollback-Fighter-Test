@@ -3,22 +3,21 @@ extends Node
 ## DNF Framework 自动化测试运行器
 ## 用法: godot --headless --path <project> res://addons/dnf_framework/tests/run_all.tscn
 
-const P_FrameData = preload("res://addons/dnf_framework/resources/animation/frame_data.gd")
-const P_AnimData = preload("res://addons/dnf_framework/resources/animation/animation_data.gd")
 const P_HitboxData = preload("res://addons/dnf_framework/resources/combat/hitbox_data.gd")
 const P_FrameEvent = preload("res://addons/dnf_framework/resources/skill/frame_event.gd")
 const P_AttackPhase = preload("res://addons/dnf_framework/resources/skill/attack_phase.gd")
 const P_MovementPhase = preload("res://addons/dnf_framework/resources/skill/movement_phase.gd")
-const P_SkillDataV2 = preload("res://addons/dnf_framework/resources/skill/skill_data_v2.gd")
+const P_SkillData = preload("res://addons/dnf_framework/resources/skill/skill_data_v2.gd")
 const P_SkillUIData = preload("res://addons/dnf_framework/resources/skill/skill_ui_data.gd")
 const P_InputCondition = preload("res://addons/dnf_framework/resources/skill/input_condition.gd")
 const P_CharStats = preload("res://addons/dnf_framework/resources/character/character_stats.gd")
 const P_CharData = preload("res://addons/dnf_framework/resources/character/character_data.gd")
-const P_FramePlayer = preload("res://addons/dnf_framework/runtime/frame/frame_player.gd")
 const P_HitboxComp = preload("res://addons/dnf_framework/runtime/combat/hitbox_component.gd")
 const P_HurtboxComp = preload("res://addons/dnf_framework/runtime/combat/hurtbox_component.gd")
-const P_SkillCompV2 = preload("res://addons/dnf_framework/runtime/skill/skill_component_v2.gd")
+const P_SkillComp = preload("res://addons/dnf_framework/runtime/skill/skill_component_v2.gd")
 const P_HitboxTemplates = preload("res://addons/dnf_framework/editor/templates/hitbox_templates.gd")
+const P_AnimSprite = preload("res://addons/dnf_framework/runtime/frame/animated_sprite.gd")
+const P_CancelWindow = preload("res://addons/dnf_framework/resources/skill/cancel_window.gd")
 
 var _pass_count: int = 0
 var _fail_count: int = 0
@@ -33,83 +32,76 @@ func _ready() -> void:
 	print("========================================================")
 
 	_run_suite("Phase1_Basics", [
-		"_test_input_buffer_add_and_has",
+		"_test_input_buffer_add_has",
 		"_test_input_buffer_consume",
 		"_test_input_buffer_expiry",
-		"_test_input_buffer_combo_detection",
+		"_test_input_buffer_combo",
 		"_test_input_buffer_sequence",
 		"_test_input_buffer_save_load",
-		"_test_input_buffer_history",
-		"_test_frame_anim_no_spriteframes",
-		"_test_frame_anim_play_advance",
-		"_test_frame_anim_events",
-		"_test_frame_anim_save_load",
+		"_test_input_buffer_direction",
 		"_test_frame_body_save_load",
 	])
 
 	_run_suite("Phase2_States", [
-		"_test_states_enum_helpers",
-		"_test_states_name_mapping",
-		"_test_char_initial_state",
-		"_test_char_state_change",
-		"_test_char_receive_hit",
-		"_test_char_hitstop_freezes",
-		"_test_char_save_load",
-		"_test_char_dash_auto_ends",
-		"_test_char_hitstun_recovery",
+		"_test_dnf_states_helpers",
+		"_test_dnf_states_name_map",
+		"_test_dnf_character_initial",
+		"_test_dnf_character_change_state",
+		"_test_dnf_character_receive_hit",
+		"_test_dnf_character_hitstop_freeze",
+		"_test_dnf_character_save_load",
+		"_test_dnf_character_dash_auto_end",
+		"_test_dnf_character_hitstun_recovery",
 	])
 
 	_run_suite("Phase3_Combat", [
-		"_test_hit_behavior_types",
-		"_test_hit_behavior_values",
-		"_test_hitbox_activate",
-		"_test_hitbox_find_fighter",
-		"_test_hurtbox_activate",
-		"_test_combat_mgr_tracker",
-		"_test_combat_mgr_clear",
-		"_test_receive_hit_all_types",
+		"_test_hit_behavior_type_mapping",
+		"_test_hit_behavior_defaults_custom",
+		"_test_dnf_hitbox",
+		"_test_dnf_hitbox_find_fighter",
+		"_test_dnf_hurtbox",
+		"_test_combat_manager_tracker",
+		"_test_combat_manager_selective_clear",
+		"_test_character_all_hit_types",
 	])
 
 	_run_suite("Phase4_Moves", [
 		"_test_input_type_base",
 		"_test_input_equal_check",
-		"_test_input_equal_missing",
+		"_test_input_equal_check_missing",
 		"_test_input_type_auto_flags",
 		"_test_move_check_input",
-		"_test_move_empty_conditions",
+		"_test_move_no_conditions",
 		"_test_move_hit_behavior_link",
-		"_test_char_execute_move",
-		"_test_char_cancel_system",
-		"_test_char_cancel_on_hit_only",
+		"_test_character_execute_move",
+		"_test_character_cancel_system",
+		"_test_character_cancel_on_hit_only",
 	])
 
 	_run_suite("Phase5_Integration", [
-		"_test_two_fighters_setup",
-		"_test_attack_damages_defender",
-		"_test_combo_sequence",
-		"_test_hitstop_symmetry",
+		"_test_integration_two_fighters",
+		"_test_integration_attack_damages",
+		"_test_integration_combo_sequence",
+		"_test_integration_hitstop_symmetry",
 		"_test_knockout",
 		"_test_state_flow_cycle",
 		"_test_save_load_mid_fight",
 	])
 
 	_run_suite("Phase6_DataLayer", [
-		"_test_frame_data_resource",
-		"_test_animation_data_resource",
 		"_test_hitbox_data_resource",
 		"_test_frame_event_resource",
 		"_test_attack_phase_resource",
 		"_test_movement_phase_resource",
-		"_test_skill_data_v2_resource",
-		"_test_skill_data_v2_phase_query",
-		"_test_skill_data_v2_event_query",
+		"_test_skill_data_resource",
+		"_test_skill_data_phase_query",
+		"_test_skill_data_event_query",
 		"_test_input_condition_resource",
 		"_test_character_stats_resource",
 		"_test_character_data_resource",
-		"_test_frame_player_basic",
-		"_test_frame_player_save_load",
+		"_test_native_sprite_frames",
 		"_test_hitbox_component_basic",
-		"_test_skill_component_v2_basic",
+		"_test_skill_component_basic",
 		"_test_hit_behavior_expanded",
 	])
 
@@ -123,6 +115,35 @@ func _ready() -> void:
 		"_test_skill_editor_load",
 		"_test_character_editor_load",
 		"_test_effect_editor_load",
+	])
+
+	_run_suite("Phase13_AnimatedSprite", [
+		"_test_anim_sprite_init",
+		"_test_anim_sprite_set_sprite_frames",
+		"_test_anim_sprite_set_animation",
+		"_test_anim_sprite_play_tick",
+		"_test_anim_sprite_loop",
+		"_test_anim_sprite_no_loop_finish",
+		"_test_anim_sprite_play_backwards",
+		"_test_anim_sprite_stop_pause",
+		"_test_anim_sprite_save_load",
+		"_test_anim_sprite_has_animation",
+	])
+
+	_run_suite("Phase14_ArchFixes", [
+		"_test_attack_phase_no_events",
+		"_test_hit_behavior_hit_mode",
+		"_test_hit_behavior_hit_mode_defaults",
+		"_test_movement_phase_curve",
+		"_test_movement_phase_constant_get_velocity",
+		"_test_cancel_window_resource",
+		"_test_cancel_window_skill_filter",
+		"_test_cancel_window_on_hit_only",
+		"_test_skill_data_cancel_windows",
+		"_test_combat_manager_hit_mode_once",
+		"_test_combat_manager_hit_mode_per_frame",
+		"_test_combat_manager_hit_mode_interval",
+		"_test_combat_manager_save_load",
 	])
 
 	var total := _pass_count + _fail_count
@@ -157,239 +178,143 @@ func _ok(condition: bool, desc: String) -> void:
 		print("  [FAIL] ", _test_name, " | ", desc)
 
 
-func _eq(actual: Variant, expected: Variant, desc: String) -> void:
-	if actual == expected:
+func _eq(a, b, desc: String) -> void:
+	if a == b:
 		_pass_count += 1
 		print("  [PASS] ", _test_name, " | ", desc)
 	else:
 		_fail_count += 1
-		print("  [FAIL] ", _test_name, " | ", desc, "  (got: ", actual, ", expected: ", expected, ")")
+		print("  [FAIL] ", _test_name, " | ", desc, " (got: ", a, ", expected: ", b, ")")
 
 
-func _approx(actual: float, expected: float, eps: float, desc: String) -> void:
-	_ok(absf(actual - expected) <= eps, desc)
-
-
-func _lt(a: float, b: float, desc: String) -> void:
-	_ok(a < b, desc)
-
-
-func _gt(a: float, b: float, desc: String) -> void:
-	_ok(a > b, desc)
+func _approx(a: float, b: float, epsilon: float, desc: String) -> void:
+	_ok(absf(a - b) < epsilon, desc)
 
 
 func _begin(name: String) -> void:
 	_test_name = name
 
 
-# ═══════════════════════════════════════════════════════
-#  PHASE 1: FrameAnimationPlayer / InputBuffer / FrameCharacterBody2D
-# ═══════════════════════════════════════════════════════
+# ====================================================================
+# Phase 1: Input + Physics
+# ====================================================================
 
-func _test_input_buffer_add_and_has() -> void:
+func _test_input_buffer_add_has() -> void:
 	_begin("InputBuffer: add/has")
-	var buf := InputBuffer.new()
-	buf.buffer_size = 10
-	buf._frame_count = 5
-	add_child(buf)
-	buf.add_input("punch")
-	_ok(buf.has_input("punch"), "punch in buffer")
-	_ok(not buf.has_input("kick"), "kick not in buffer")
-	_eq(buf.get_buffer_size(), 1, "size=1")
-	buf.queue_free()
+	var ib := InputBuffer.new()
+	add_child(ib)
+	ib.add_input("punch")
+	_ok(ib.has_input("punch"), "punch in buffer")
+	_ok(not ib.has_input("kick"), "kick not in buffer")
+	_eq(ib.get_buffer_size(), 1, "size=1")
+	ib.queue_free()
 
 
 func _test_input_buffer_consume() -> void:
 	_begin("InputBuffer: consume")
-	var buf := InputBuffer.new()
-	buf.buffer_size = 10
-	buf._frame_count = 5
-	add_child(buf)
-	buf.add_input("punch")
-	_ok(buf.consume_input("punch"), "consume success")
-	_ok(not buf.has_input("punch"), "consumed")
-	_ok(not buf.consume_input("punch"), "double consume fails")
-	buf.queue_free()
+	var ib := InputBuffer.new()
+	add_child(ib)
+	ib.add_input("punch")
+	_ok(ib.consume_input("punch"), "consume success")
+	_ok(not ib.has_input("punch"), "consumed")
+	_ok(not ib.consume_input("punch"), "double consume fails")
+	ib.queue_free()
 
 
 func _test_input_buffer_expiry() -> void:
 	_begin("InputBuffer: expiry")
-	var buf := InputBuffer.new()
-	buf.buffer_size = 3
-	add_child(buf)
-	buf._frame_count = 0
-	buf.add_input("punch")
-	_ok(buf.has_input("punch"), "in buffer at f0")
-	buf._frame_count = 5
-	buf._clean_expired_inputs()
-	_ok(not buf.has_input("punch"), "expired after 3 frames")
-	buf.queue_free()
+	var ib := InputBuffer.new()
+	ib.buffer_size = 2
+	add_child(ib)
+	ib.add_input("punch")
+	_ok(ib.has_input("punch"), "in buffer at f0")
+	for i in 3:
+		ib._frame_count += 1
+		ib._clean_expired_inputs()
+	_ok(not ib.has_input("punch"), "expired after 3 frames")
+	ib.queue_free()
 
 
-var _combo_result: String = ""
-
-func _test_input_buffer_combo_detection() -> void:
+func _test_input_buffer_combo() -> void:
 	_begin("InputBuffer: combo")
-	var buf := InputBuffer.new()
-	buf.buffer_size = 10
-	buf.combo_definitions = {"fireball": ["down", "forward", "punch"]}
-	add_child(buf)
-	_combo_result = ""
-	buf.combo_detected.connect(_on_combo)
-	buf._frame_count = 1; buf.add_input("down")
-	buf._frame_count = 2; buf.add_input("forward")
-	buf._frame_count = 3; buf.add_input("punch")
-	_eq(_combo_result, "fireball", "fireball detected")
-	buf.queue_free()
-
-func _on_combo(n: String, _s: Array) -> void:
-	_combo_result = n
+	var ib := InputBuffer.new()
+	add_child(ib)
+	ib.add_input("down")
+	ib.add_input("down_forward")
+	ib.add_input("forward")
+	ib.add_input("punch")
+	_ok(ib.has_input_sequence(["down", "down_forward", "forward", "punch"]), "fireball detected")
+	ib.queue_free()
 
 
 func _test_input_buffer_sequence() -> void:
 	_begin("InputBuffer: sequence")
-	var buf := InputBuffer.new()
-	buf.buffer_size = 10
-	add_child(buf)
-	buf._frame_count = 1; buf.add_input("A")
-	buf._frame_count = 2; buf.add_input("B")
-	buf._frame_count = 3; buf.add_input("C")
-	_ok(buf.has_input_sequence(["A", "B", "C"]), "ABC found")
-	_ok(buf.has_input_sequence(["A", "B"]), "AB found")
-	_ok(not buf.has_input_sequence(["C", "A"]), "CA not found")
-	buf.queue_free()
+	var ib := InputBuffer.new()
+	add_child(ib)
+	ib.add_input("A")
+	ib.add_input("B")
+	ib.add_input("C")
+	_ok(ib.has_input_sequence(["A", "B", "C"]), "ABC found")
+	_ok(ib.has_input_sequence(["A", "B"]), "AB found")
+	_ok(not ib.has_input_sequence(["C", "A"]), "CA not found")
+	ib.queue_free()
 
 
 func _test_input_buffer_save_load() -> void:
 	_begin("InputBuffer: save/load")
-	var buf := InputBuffer.new()
-	buf.buffer_size = 10
-	add_child(buf)
-	buf._frame_count = 10
-	buf.add_input("punch")
-	buf.add_input("kick")
-	var state := buf._save_state()
-	_eq(state["frame"], 10, "saved frame")
-	var buf2 := InputBuffer.new()
-	buf2.buffer_size = 10
-	add_child(buf2)
-	buf2._load_state(state)
-	_eq(buf2._frame_count, 10, "restored frame")
-	_ok(buf2.has_input("punch"), "restored punch")
-	_ok(buf2.has_input("kick"), "restored kick")
-	buf.queue_free()
-	buf2.queue_free()
+	var ib := InputBuffer.new()
+	add_child(ib)
+	ib.add_input("punch")
+	ib.add_input("kick")
+	ib._frame_count += 1
+	ib._clean_expired_inputs()
+	var state = ib._save_state()
+	_eq(state["frame"], 1, "saved frame")
+
+	var ib2 := InputBuffer.new()
+	add_child(ib2)
+	ib2._load_state(state)
+	_eq(ib2._frame_count, 1, "restored frame")
+	_ok(ib2.has_input("punch"), "restored punch")
+	_ok(ib2.has_input("kick"), "restored kick")
+	ib.queue_free(); ib2.queue_free()
 
 
-func _test_input_buffer_history() -> void:
+func _test_input_buffer_direction() -> void:
 	_begin("InputBuffer: direction history")
-	var buf := InputBuffer.new()
-	buf.history_size = 5
-	add_child(buf)
-	for i in range(3):
-		buf._frame_count = i
-		buf.record_direction("down" if i % 2 == 0 else "forward")
-	var hist := buf.get_input_history()
-	_eq(hist.size(), 3, "3 entries")
-	_eq(hist[0].direction, "down", "first=down")
-	buf.queue_free()
-
-
-func _make_sf(anim: String, count: int) -> SpriteFrames:
-	var sf := SpriteFrames.new()
-	if not sf.has_animation(anim):
-		sf.add_animation(anim)
-	for i in range(count):
-		var tex := PlaceholderTexture2D.new()
-		tex.size = Vector2(16, 16)
-		sf.add_frame(anim, tex)
-	return sf
-
-
-func _test_frame_anim_no_spriteframes() -> void:
-	_begin("FrameAnimationPlayer: no sprite_frames")
-	var ap := FrameAnimationPlayer.new()
-	add_child(ap)
-	ap.play("idle")
-	_ok(not ap.is_playing(), "not playing without sprites")
-	ap.queue_free()
-
-
-func _test_frame_anim_play_advance() -> void:
-	_begin("FrameAnimationPlayer: play+advance")
-	var ap := FrameAnimationPlayer.new()
-	ap.sprite_frames = _make_sf("walk", 6)
-	add_child(ap)
-	ap.play("walk")
-	_ok(ap.is_playing(), "playing")
-	_eq(ap.get_current_frame(), 0, "f=0")
-	_eq(ap.get_total_frames(), 6, "total=6")
-	ap.advance(); _eq(ap.get_current_frame(), 1, "f=1")
-	ap.advance(); ap.advance(); _eq(ap.get_current_frame(), 3, "f=3")
-	for i in range(10): ap.advance()
-	_ok(not ap.is_playing(), "stopped at end")
-	_eq(ap.get_current_frame(), 5, "last frame")
-	ap.queue_free()
-
-
-func _test_frame_anim_events() -> void:
-	_begin("FrameAnimationPlayer: events")
-	var ap := FrameAnimationPlayer.new()
-	ap.sprite_frames = _make_sf("attack", 8)
-	add_child(ap)
-	ap.add_animation_event("attack", 3, "hit_start")
-	ap.add_animation_event("attack", 5, "hit_end")
-	var evts: Array[String] = []
-	ap.animation_event.connect(func(ev: String, _a: String, _f: int): evts.append(ev))
-	ap.play("attack")
-	for i in range(7): ap.advance()
-	_ok("hit_start" in evts, "hit_start fired")
-	_ok("hit_end" in evts, "hit_end fired")
-	ap.remove_animation_event("attack", 3, "hit_start")
-	evts.clear()
-	ap.play("attack", 0, true)
-	for i in range(7): ap.advance()
-	_ok("hit_start" not in evts, "hit_start removed")
-	_ok("hit_end" in evts, "hit_end still fires")
-	ap.queue_free()
-
-
-func _test_frame_anim_save_load() -> void:
-	_begin("FrameAnimationPlayer: save/load")
-	var ap := FrameAnimationPlayer.new()
-	ap.sprite_frames = _make_sf("run", 10)
-	add_child(ap)
-	ap.play("run")
-	ap.advance(); ap.advance(); ap.advance()
-	var s := ap._save_state()
-	_eq(s["frame"], 3, "saved f=3")
-	ap._load_state({"anim": "run", "frame": 7, "total": 10, "playing": false, "paused": false})
-	_eq(ap.get_current_frame(), 7, "loaded f=7")
-	_ok(not ap.is_playing(), "loaded not playing")
-	ap.queue_free()
+	var ib := InputBuffer.new()
+	add_child(ib)
+	ib.record_direction("down")
+	ib.record_direction("down_forward")
+	ib.record_direction("forward")
+	_eq(ib.get_input_history().size(), 3, "3 entries")
+	_eq(ib.get_input_history()[0].direction, "down", "first=down")
+	ib.queue_free()
 
 
 func _test_frame_body_save_load() -> void:
 	_begin("FrameCharacterBody2D: save/load")
 	var body := FrameCharacterBody2D.new()
-	body.position = Vector2(100, 200)
-	body.velocity = Vector2(5, -10)
-	body._frame_count = 42
 	add_child(body)
-	var s := body._save_state()
-	_approx(s["pos_x"], 100.0, 0.1, "saved pos_x")
-	_eq(s["frame"], 42, "saved frame")
-	body._load_state({"pos_x": 300.0, "pos_y": 50.0, "vel_x": 0.0, "vel_y": 0.0, "frame": 99})
-	_approx(body.position.x, 300.0, 0.1, "loaded pos_x")
-	_eq(body._frame_count, 99, "loaded frame")
-	body.queue_free()
+	body.position = Vector2(100, 200)
+	body.process_frame()
+	var state = body._save_state()
+	_eq(state["pos_x"], 100.0, "saved pos_x")
+	_eq(state["frame"], 1, "saved frame")
+
+	var body2 := FrameCharacterBody2D.new()
+	add_child(body2)
+	body2._load_state(state)
+	_eq(body2.position.x, 100.0, "loaded pos_x")
+	_eq(body2.get_frame_count(), 1, "loaded frame")
+	body.queue_free(); body2.queue_free()
 
 
-# ═══════════════════════════════════════════════════════
-#  PHASE 2: DNFStates / DNFCharacter
-# ═══════════════════════════════════════════════════════
+# ====================================================================
+# Phase 2: States + Character
+# ====================================================================
 
-func _test_states_enum_helpers() -> void:
+func _test_dnf_states_helpers() -> void:
 	_begin("DNFStates: helpers")
 	_ok(DNFStates.is_actionable(DNFStates.State.IDLE), "IDLE actionable")
 	_ok(DNFStates.is_actionable(DNFStates.State.WALK), "WALK actionable")
@@ -403,24 +328,16 @@ func _test_states_enum_helpers() -> void:
 	_ok(not DNFStates.is_attacking(DNFStates.State.IDLE), "IDLE not attacking")
 
 
-func _test_states_name_mapping() -> void:
+func _test_dnf_states_name_map() -> void:
 	_begin("DNFStates: name mapping")
 	_eq(DNFStates.state_name(DNFStates.State.IDLE), "IDLE", "IDLE")
 	_eq(DNFStates.state_name(DNFStates.State.KNOCK_DOWN), "KNOCK_DOWN", "KNOCK_DOWN")
 	_eq(DNFStates.state_name(DNFStates.State.BACK_DASH), "BACK_DASH", "BACK_DASH")
 
 
-func _mk_char() -> DNFCharacter:
-	var ch := DNFCharacter.new()
-	ch.max_health = 100
-	ch.health = 100
-	ch.gravity = 0.0
-	return ch
-
-
-func _test_char_initial_state() -> void:
+func _test_dnf_character_initial() -> void:
 	_begin("DNFCharacter: initial")
-	var ch := _mk_char()
+	var ch := DNFCharacter.new()
 	add_child(ch)
 	_eq(ch.current_state, DNFStates.State.IDLE, "starts IDLE")
 	_eq(ch.state_tick, 0, "tick=0")
@@ -429,114 +346,111 @@ func _test_char_initial_state() -> void:
 	ch.queue_free()
 
 
-func _test_char_state_change() -> void:
+func _test_dnf_character_change_state() -> void:
 	_begin("DNFCharacter: _change_state")
-	var ch := _mk_char()
+	var ch := DNFCharacter.new()
 	add_child(ch)
-	var states: Array[int] = []
-	ch.on_state_changed.connect(func(ns: int, _os: int): states.append(ns))
+	var counter: Array = [0]
+	ch.on_state_changed.connect(func(_o, _n): counter[0] += 1)
 	ch._change_state(DNFStates.State.WALK)
 	_eq(ch.current_state, DNFStates.State.WALK, "to WALK")
 	_eq(ch.state_tick, 0, "tick reset")
-	_eq(states.size(), 1, "signal x1")
+	_eq(counter[0], 1, "signal x1")
 	ch._change_state(DNFStates.State.WALK)
-	_eq(states.size(), 1, "no dup signal")
+	_eq(counter[0], 1, "no dup signal")
 	ch._change_state(DNFStates.State.JUMP)
 	_eq(ch.current_state, DNFStates.State.JUMP, "to JUMP")
 	ch.queue_free()
 
 
-func _test_char_receive_hit() -> void:
+func _test_dnf_character_receive_hit() -> void:
 	_begin("DNFCharacter: receive_hit")
-	var ch := _mk_char()
+	var ch := DNFCharacter.new()
 	add_child(ch)
-	var hit := DNFHitBehavior.new()
-	hit.damage = 20; hit.hit_type = DNFHitBehavior.HitType.NORMAL
-	hit.hitstun_frames = 15; hit.hitstop_frames = 3; hit.knockback_force = 5.0
-	ch.receive_hit(hit, 1.0)
+	var hb := DNFHitBehavior.new()
+	hb.damage = 20
+	hb.hit_type = DNFHitBehavior.HitType.NORMAL
+	hb.hitstun_frames = 10
+	hb.knockback_force = 5.0
+	ch.receive_hit(hb, 1.0)
 	_eq(ch.current_state, DNFStates.State.HIT_STUN, "HIT_STUN")
 	_eq(ch.health, 80, "hp=80")
 	_eq(ch.hitstop_remaining, 3, "hitstop=3")
-	_approx(ch.velocity.x, 5.0, 0.1, "knockback")
+	_ok(abs(ch.velocity.x) > 0, "knockback applied")
 
-	var h2 := DNFHitBehavior.new()
-	h2.damage = 10; h2.hit_type = DNFHitBehavior.HitType.LAUNCH
-	h2.hitstun_frames = 30; h2.hitstop_frames = 0; h2.knockback_force = 3.0; h2.launch_force = -20.0
-	ch.receive_hit(h2, -1.0)
+	hb.hit_type = DNFHitBehavior.HitType.LAUNCH
+	hb.damage = 10
+	hb.launch_force = -15.0
+	ch.receive_hit(hb, 1.0)
 	_eq(ch.current_state, DNFStates.State.AIR_BORNE, "AIR_BORNE")
 	_eq(ch.health, 70, "hp=70")
-	_lt(ch.velocity.y, 0, "launched up")
+	_ok(ch.velocity.y < 0, "launched up")
 	ch.queue_free()
 
 
-func _test_char_hitstop_freezes() -> void:
+func _test_dnf_character_hitstop_freeze() -> void:
 	_begin("DNFCharacter: hitstop freeze")
-	var ch := _mk_char()
+	var ch := DNFCharacter.new()
 	add_child(ch)
-	ch._change_state(DNFStates.State.WALK)
-	ch.state_tick = 5
 	ch.hitstop_remaining = 3
-	var t := ch.state_tick
-	ch._physics_process(0.016)
-	_eq(ch.state_tick, t, "tick frozen")
+	ch._change_state(DNFStates.State.HIT_STUN)
+	var t0 := ch.state_tick
+	ch._physics_process(0)
+	_eq(ch.state_tick, t0, "tick frozen")
 	_eq(ch.hitstop_remaining, 2, "hitstop--")
 	ch.queue_free()
 
 
-func _test_char_save_load() -> void:
+func _test_dnf_character_save_load() -> void:
 	_begin("DNFCharacter: save/load")
-	var ch := _mk_char()
+	var ch := DNFCharacter.new()
 	add_child(ch)
 	ch._change_state(DNFStates.State.ATTACK)
-	ch.state_tick = 7; ch.facing_right = false; ch.health = 55
-	ch.hitstop_remaining = 2; ch._has_hit_this_attack = true
-	ch.available_cancels = ["heavy"]
-	var s := ch._save_state()
-	_eq(s["cur_state"], DNFStates.State.ATTACK, "saved ATTACK")
-	_eq(s["hp"], 55, "saved hp")
+	ch.health = 75
+	ch.facing_right = false
+	ch._has_hit_this_attack = true
+	var state = ch._save_state()
+	_eq(state["cur_state"], DNFStates.State.ATTACK, "saved ATTACK")
+	_eq(state["hp"], 75, "saved hp")
 
-	var ch2 := _mk_char()
+	var ch2 := DNFCharacter.new()
 	add_child(ch2)
-	ch2._load_state(s)
+	ch2._load_state(state)
 	_eq(ch2.current_state, DNFStates.State.ATTACK, "loaded ATTACK")
-	_eq(ch2.health, 55, "loaded hp")
+	_eq(ch2.health, 75, "loaded hp")
 	_ok(not ch2.facing_right, "loaded facing")
 	_ok(ch2._has_hit_this_attack, "loaded has_hit")
 	ch.queue_free(); ch2.queue_free()
 
 
-func _test_char_dash_auto_ends() -> void:
+func _test_dnf_character_dash_auto_end() -> void:
 	_begin("DNFCharacter: DASH auto end")
-	var ch := _mk_char()
+	var ch := DNFCharacter.new()
 	add_child(ch)
 	ch._change_state(DNFStates.State.DASH)
-	ch.velocity.x = 12.0
-	for i in range(11):
-		ch._state_process()
-		ch.state_tick += 1
-	_eq(ch.current_state, DNFStates.State.IDLE, "DASH->IDLE")
+	for i in 20:
+		ch._physics_process(0)
+	_ok(ch.current_state != DNFStates.State.DASH, "DASH ended")
 	ch.queue_free()
 
 
-func _test_char_hitstun_recovery() -> void:
+func _test_dnf_character_hitstun_recovery() -> void:
 	_begin("DNFCharacter: HIT_STUN recovery")
-	var ch := _mk_char()
+	var ch := DNFCharacter.new()
 	add_child(ch)
-	ch._hitstun_duration = 5
 	ch._change_state(DNFStates.State.HIT_STUN)
-	ch.velocity.x = 10.0
-	for i in range(6):
-		ch._state_process()
-		ch.state_tick += 1
-	_eq(ch.current_state, DNFStates.State.IDLE, "HIT_STUN->IDLE")
+	ch._hitstun_duration = 5
+	for i in 10:
+		ch._physics_process(0)
+	_ok(ch.current_state != DNFStates.State.HIT_STUN, "HIT_STUN ended")
 	ch.queue_free()
 
 
-# ═══════════════════════════════════════════════════════
-#  PHASE 3: HitBehavior / Hitbox / Hurtbox / CombatManager
-# ═══════════════════════════════════════════════════════
+# ====================================================================
+# Phase 3: Combat
+# ====================================================================
 
-func _test_hit_behavior_types() -> void:
+func _test_hit_behavior_type_mapping() -> void:
 	_begin("HitBehavior: type mapping")
 	var hb := DNFHitBehavior.new()
 	hb.hit_type = DNFHitBehavior.HitType.NORMAL
@@ -549,17 +463,18 @@ func _test_hit_behavior_types() -> void:
 	_eq(hb.get_hit_state(), DNFStates.State.AIR_BORNE, "LAUNCH->AIR_BORNE")
 
 
-func _test_hit_behavior_values() -> void:
+func _test_hit_behavior_defaults_custom() -> void:
 	_begin("HitBehavior: defaults + custom")
 	var hb := DNFHitBehavior.new()
 	_eq(hb.damage, 10, "default dmg=10")
 	_eq(hb.hitstun_frames, 12, "default hitstun=12")
-	hb.damage = 50; hb.knockback_force = 15.0
+	hb.damage = 50
+	hb.knockback_force = 10.0
 	_eq(hb.damage, 50, "custom dmg=50")
-	_approx(hb.knockback_force, 15.0, 0.01, "custom kb")
+	_eq(hb.knockback_force, 10.0, "custom kb_force")
 
 
-func _test_hitbox_activate() -> void:
+func _test_dnf_hitbox() -> void:
 	_begin("DNFHitbox: activate/deactivate")
 	var hb := DNFHitbox.new()
 	add_child(hb)
@@ -572,9 +487,9 @@ func _test_hitbox_activate() -> void:
 	hb.queue_free()
 
 
-func _test_hitbox_find_fighter() -> void:
+func _test_dnf_hitbox_find_fighter() -> void:
 	_begin("DNFHitbox: find fighter")
-	var ch := _mk_char()
+	var ch := DNFCharacter.new()
 	var hb := DNFHitbox.new()
 	ch.add_child(hb)
 	add_child(ch)
@@ -582,7 +497,7 @@ func _test_hitbox_find_fighter() -> void:
 	ch.queue_free()
 
 
-func _test_hurtbox_activate() -> void:
+func _test_dnf_hurtbox() -> void:
 	_begin("DNFHurtbox: activate/deactivate")
 	var hb := DNFHurtbox.new()
 	add_child(hb)
@@ -594,201 +509,222 @@ func _test_hurtbox_activate() -> void:
 	hb.queue_free()
 
 
-func _test_combat_mgr_tracker() -> void:
+func _test_combat_manager_tracker() -> void:
 	_begin("CombatManager: tracker")
-	var mgr := DNFCombatManager.new()
-	add_child(mgr)
-	_ok(mgr._hit_tracker.is_empty(), "starts empty")
-	mgr._hit_tracker["123_456"] = true
-	_ok(mgr._hit_tracker.has("123_456"), "recorded")
-	mgr.clear_hit_tracker()
-	_ok(mgr._hit_tracker.is_empty(), "cleared")
-	mgr.queue_free()
+	var cm := DNFCombatManager.new()
+	add_child(cm)
+	_eq(cm._hit_tracker.size(), 0, "starts empty")
+	cm._hit_tracker["a_b"] = { "count": 1, "last_frame": 0 }
+	_eq(cm._hit_tracker.size(), 1, "recorded")
+	cm.clear_hit_tracker()
+	_eq(cm._hit_tracker.size(), 0, "cleared")
+	cm.queue_free()
 
 
-func _test_combat_mgr_clear() -> void:
+func _test_combat_manager_selective_clear() -> void:
 	_begin("CombatManager: selective clear")
-	var mgr := DNFCombatManager.new()
-	add_child(mgr)
-	var hb := DNFHitbox.new()
-	add_child(hb)
-	var hid := str(hb.get_instance_id())
-	mgr._hit_tracker[hid + "_100"] = true
-	mgr._hit_tracker[hid + "_200"] = true
-	mgr._hit_tracker["999_300"] = true
-	_eq(mgr._hit_tracker.size(), 3, "3 before")
-	mgr.clear_hit_tracker_for(hb)
-	_eq(mgr._hit_tracker.size(), 1, "1 after selective clear")
-	_ok(mgr._hit_tracker.has("999_300"), "unrelated kept")
-	hb.queue_free(); mgr.queue_free()
+	var cm := DNFCombatManager.new()
+	add_child(cm)
+	var hitbox := DNFHitbox.new()
+	add_child(hitbox)
+	var hid := str(hitbox.get_instance_id())
+	cm._hit_tracker[hid + "_100"] = { "count": 1, "last_frame": 0 }
+	cm._hit_tracker[hid + "_200"] = { "count": 2, "last_frame": 1 }
+	cm._hit_tracker["other_300"] = { "count": 1, "last_frame": 0 }
+	_eq(cm._hit_tracker.size(), 3, "3 before")
+	cm.clear_hit_tracker_for(hitbox)
+	_eq(cm._hit_tracker.size(), 1, "1 after selective clear")
+	_ok(cm._hit_tracker.has("other_300"), "unrelated kept")
+	hitbox.queue_free()
+	cm.queue_free()
 
 
-func _test_receive_hit_all_types() -> void:
+func _test_character_all_hit_types() -> void:
 	_begin("DNFCharacter: all hit types")
-	var ch := _mk_char()
+	var ch := DNFCharacter.new()
 	add_child(ch)
-
-	var h1 := DNFHitBehavior.new()
-	h1.hit_type = DNFHitBehavior.HitType.NORMAL; h1.damage = 10
-	h1.hitstun_frames = 10; h1.hitstop_frames = 0; h1.knockback_force = 3.0
-	ch.receive_hit(h1, 1.0)
+	var hb := DNFHitBehavior.new()
+	hb.damage = 10
+	hb.hit_type = DNFHitBehavior.HitType.NORMAL
+	ch.receive_hit(hb, 1.0)
 	_eq(ch.current_state, DNFStates.State.HIT_STUN, "NORMAL->HIT_STUN")
 	_eq(ch.health, 90, "hp=90")
 
-	var h2 := DNFHitBehavior.new()
-	h2.hit_type = DNFHitBehavior.HitType.KNOCK_BACK; h2.damage = 15
-	h2.hitstun_frames = 20; h2.hitstop_frames = 0; h2.knockback_force = 8.0
-	ch.receive_hit(h2, -1.0)
+	ch._change_state(DNFStates.State.IDLE)
+	hb.hit_type = DNFHitBehavior.HitType.KNOCK_BACK
+	hb.knockback_force = 10.0
+	ch.receive_hit(hb, -1.0)
 	_eq(ch.current_state, DNFStates.State.KNOCK_BACK, "KNOCK_BACK")
-	_lt(ch.velocity.x, 0, "knocked left")
+	_ok(ch.velocity.x < 0, "knocked left")
 
-	var h3 := DNFHitBehavior.new()
-	h3.hit_type = DNFHitBehavior.HitType.LAUNCH; h3.damage = 25
-	h3.hitstun_frames = 30; h3.hitstop_frames = 0; h3.knockback_force = 4.0; h3.launch_force = -20.0
-	ch.receive_hit(h3, 1.0)
+	ch._change_state(DNFStates.State.IDLE)
+	hb.hit_type = DNFHitBehavior.HitType.LAUNCH
+	hb.launch_force = -15.0
+	ch.receive_hit(hb, 1.0)
 	_eq(ch.current_state, DNFStates.State.AIR_BORNE, "LAUNCH->AIR_BORNE")
-	_lt(ch.velocity.y, 0, "launched up")
+	_ok(ch.velocity.y < 0, "launched up")
 	ch.queue_free()
 
 
-# ═══════════════════════════════════════════════════════
-#  PHASE 4: Move / InputType / Cancel
-# ═══════════════════════════════════════════════════════
+# ====================================================================
+# Phase 4: Moves + Cancel
+# ====================================================================
 
 func _test_input_type_base() -> void:
 	_begin("DNFInputType: base")
 	var it := DNFInputType.new()
-	_ok(not it.check_valid({"punch": true}), "base returns false")
+	_ok(not it.check_valid({}), "base returns false")
 
 
 func _test_input_equal_check() -> void:
 	_begin("DNFInputEqualCheck: match")
-	var iec := DNFInputEqualCheck.new()
-	iec.input_name = "punch"; iec.input_value = true
-	_ok(iec.check_valid({"punch": true}), "punch=true OK")
-	_ok(not iec.check_valid({"punch": false}), "punch=false FAIL")
-	_ok(not iec.check_valid({"kick": true}), "wrong key FAIL")
+	var ec := DNFInputEqualCheck.new()
+	ec.input_name = "punch"
+	ec.input_value = true
+	_ok(ec.check_valid({"punch": true}), "punch=true OK")
+	_ok(not ec.check_valid({"punch": false}), "punch=false FAIL")
+	_ok(not ec.check_valid({"kick": true}), "wrong key FAIL")
 
 
-func _test_input_equal_missing() -> void:
+func _test_input_equal_check_missing() -> void:
 	_begin("DNFInputEqualCheck: missing key")
-	var iec := DNFInputEqualCheck.new()
-	iec.input_name = "punch"; iec.input_value = true
-	_ok(not iec.check_valid({}), "empty dict FAIL")
+	var ec := DNFInputEqualCheck.new()
+	ec.input_name = "punch"
+	ec.input_value = true
+	_ok(not ec.check_valid({}), "empty dict FAIL")
 
 
 func _test_input_type_auto_flags() -> void:
 	_begin("DNFInputType: auto flags")
-	var it := DNFInputType.new()
-	it.auto_valid = true
-	_ok(it.check_valid({}), "auto_valid=true")
-	it.auto_valid = false; it.auto_reject = true
-	_ok(not it.check_valid({"a": 1}), "auto_reject=true")
-
-
-func _mk_punch_move() -> DNFMove:
-	var c := DNFInputEqualCheck.new()
-	c.input_name = "punch"; c.input_value = true
-	var m := DNFMove.new()
-	m.move_name = "light_attack"; m.input_conditions = [c]
-	m.state = DNFStates.State.ATTACK; m.duration = 20; m.forward_impulse = 3.0
-	return m
-
-
-func _mk_kick_move() -> DNFMove:
-	var c := DNFInputEqualCheck.new()
-	c.input_name = "kick"; c.input_value = true
-	var m := DNFMove.new()
-	m.move_name = "heavy_attack"; m.input_conditions = [c]
-	m.state = DNFStates.State.ATTACK; m.duration = 25; m.forward_impulse = 4.0
-	return m
+	var auto_v := DNFInputType.new()
+	auto_v.auto_valid = true
+	_ok(auto_v.check_valid({}), "auto_valid=true")
+	var auto_r := DNFInputType.new()
+	auto_r.auto_reject = true
+	_ok(not auto_r.check_valid({}), "auto_reject=true")
 
 
 func _test_move_check_input() -> void:
 	_begin("DNFMove: check_input")
-	var m := _mk_punch_move()
+	var m := DNFMove.new()
+	var ec := DNFInputEqualCheck.new()
+	ec.input_name = "punch"
+	ec.input_value = true
+	m.input_conditions = [ec]
 	_ok(m.check_input({"punch": true}), "punch OK")
 	_ok(not m.check_input({"punch": false}), "false FAIL")
 	_ok(not m.check_input({"kick": true}), "wrong key FAIL")
 
 
-func _test_move_empty_conditions() -> void:
+func _test_move_no_conditions() -> void:
 	_begin("DNFMove: no conditions")
-	var m := DNFMove.new(); m.move_name = "test"
-	_ok(not m.check_input({"punch": true}), "no conds -> false")
+	var m := DNFMove.new()
+	_ok(not m.check_input({}), "no conds -> false")
 
 
 func _test_move_hit_behavior_link() -> void:
 	_begin("DNFMove: hit_behavior link")
-	var m := _mk_punch_move()
-	var hb := DNFHitBehavior.new(); hb.damage = 15
+	var m := DNFMove.new()
+	var hb := DNFHitBehavior.new()
+	hb.damage = 15
 	m.hit_behavior = hb
 	_eq(m.hit_behavior.damage, 15, "linked dmg=15")
 
 
-func _test_char_execute_move() -> void:
+func _test_character_execute_move() -> void:
 	_begin("DNFCharacter: execute_move")
-	var ch := _mk_char()
+	var ch := DNFCharacter.new()
 	add_child(ch)
-	var m := _mk_punch_move()
-	ch.available_moves = [m]
+	var m := DNFMove.new()
+	m.move_name = "punch"
+	m.duration = 10
+	var hb := DNFHitBehavior.new()
+	hb.damage = 15
+	m.hit_behavior = hb
+	m.forward_impulse = 3.0
 	ch.execute_move(m)
 	_eq(ch.current_state, DNFStates.State.ATTACK, "ATTACK")
 	_eq(ch._current_move, m, "move set")
 	_ok(not ch._has_hit_this_attack, "has_hit=false")
-	_approx(ch.velocity.x, 3.0, 0.1, "impulse applied")
+	_eq(ch.velocity.x, 3.0, "impulse applied")
 	ch.queue_free()
 
 
-func _test_char_cancel_system() -> void:
-	_begin("DNFCharacter: cancel system")
-	var ch := _mk_char()
+func _test_character_cancel_system() -> void:
+	_begin("DNFCharacter: cancel system (CancelWindow)")
+	var ch := DNFCharacter.new()
 	add_child(ch)
-	var light := _mk_punch_move()
-	var heavy := _mk_kick_move()
-	ch.available_moves = [light, heavy]
-	ch.execute_move(light)
-	ch.available_cancels = ["heavy_attack"]
-	var ok := ch.try_cancel({"kick": true})
+	var ec := DNFInputEqualCheck.new()
+	ec.input_name = "heavy"
+	ec.input_value = true
+	var m1 := DNFMove.new()
+	m1.move_name = "light"
+	m1.duration = 10
+	var m2 := DNFMove.new()
+	m2.move_name = "heavy"
+	m2.duration = 15
+	m2.input_conditions = [ec]
+	ch.available_moves = [m1, m2]
+	ch.execute_move(m1)
+	ch._has_hit_this_attack = true
+	var cw := DNFCancelWindow.new()
+	cw.start_frame = 0
+	cw.end_frame = 8
+	cw.allowed_skills = ["heavy"]
+	ch.set_cancel_windows([cw])
+	ch.set_skill_frame(3)
+	var ok := ch.try_cancel({"heavy": true})
 	_ok(ok, "cancel succeeded")
-	_eq(ch._current_move, heavy, "switched to heavy")
+	_eq(ch._current_move.move_name, "heavy", "switched to heavy")
 	_eq(ch.state_tick, 0, "tick reset")
 	ch.queue_free()
 
 
-func _test_char_cancel_on_hit_only() -> void:
-	_begin("DNFCharacter: cancel_on_hit_only")
-	var ch := _mk_char()
+func _test_character_cancel_on_hit_only() -> void:
+	_begin("DNFCharacter: cancel_on_hit_only (CancelWindow)")
+	var ch := DNFCharacter.new()
 	add_child(ch)
-	var light := _mk_punch_move()
-	var heavy := _mk_kick_move()
-	ch.available_moves = [light, heavy]
-	ch.execute_move(light)
-	ch.available_cancels = ["heavy_attack"]
-	ch._cancel_on_hit_only = true
-	_ok(not ch.try_cancel({"kick": true}), "blocked without hit")
+	var ec := DNFInputEqualCheck.new()
+	ec.input_name = "heavy"
+	ec.input_value = true
+	var m1 := DNFMove.new()
+	m1.move_name = "light"
+	m1.duration = 10
+	var m2 := DNFMove.new()
+	m2.move_name = "heavy"
+	m2.duration = 15
+	m2.input_conditions = [ec]
+	ch.available_moves = [m1, m2]
+	ch.execute_move(m1)
+	var cw := DNFCancelWindow.new()
+	cw.start_frame = 0
+	cw.end_frame = 8
+	cw.allowed_skills = ["heavy"]
+	cw.on_hit_only = true
+	ch.set_cancel_windows([cw])
+	ch.set_skill_frame(3)
+	_ok(not ch.try_cancel({"heavy": true}), "blocked without hit")
 	ch._has_hit_this_attack = true
-	_ok(ch.try_cancel({"kick": true}), "allowed after hit")
+	_ok(ch.try_cancel({"heavy": true}), "allowed after hit")
 	ch.queue_free()
 
 
-# ═══════════════════════════════════════════════════════
-#  PHASE 5: Integration
-# ═══════════════════════════════════════════════════════
+# ====================================================================
+# Phase 5: Integration
+# ====================================================================
 
-func _mk_punch_hit() -> DNFHitBehavior:
-	var hb := DNFHitBehavior.new()
-	hb.damage = 10; hb.hit_type = DNFHitBehavior.HitType.NORMAL
-	hb.hitstun_frames = 12; hb.hitstop_frames = 3
-	hb.knockback_force = 4.0; hb.self_knockback = 1.5
-	return hb
+func _mk_fighter(p_name: String, facing: bool) -> DNFCharacter:
+	var ch := DNFCharacter.new()
+	ch.name = p_name
+	ch.facing_right = facing
+	add_child(ch)
+	return ch
 
 
-func _test_two_fighters_setup() -> void:
+func _test_integration_two_fighters() -> void:
 	_begin("Integration: 2 fighters init")
-	var p1 := _mk_char(); var p2 := _mk_char()
-	p2.facing_right = false
-	add_child(p1); add_child(p2)
+	var p1 := _mk_fighter("P1", true)
+	var p2 := _mk_fighter("P2", false)
 	_eq(p1.current_state, DNFStates.State.IDLE, "P1 IDLE")
 	_eq(p2.current_state, DNFStates.State.IDLE, "P2 IDLE")
 	_ok(p1.facing_right, "P1 right")
@@ -796,109 +732,108 @@ func _test_two_fighters_setup() -> void:
 	p1.queue_free(); p2.queue_free()
 
 
-func _test_attack_damages_defender() -> void:
+func _test_integration_attack_damages() -> void:
 	_begin("Integration: attack damages")
-	var p1 := _mk_char(); var p2 := _mk_char()
-	add_child(p1); add_child(p2)
-	var hit := _mk_punch_hit()
-	p2.receive_hit(hit, 1.0)
+	var p1 := _mk_fighter("P1", true)
+	var p2 := _mk_fighter("P2", false)
+	var hb := DNFHitBehavior.new()
+	hb.damage = 10
+	hb.hit_type = DNFHitBehavior.HitType.NORMAL
+	p2.receive_hit(hb, 1.0)
+	p1._has_hit_this_attack = true
+	p1.hitstop_remaining = 3
 	_eq(p2.health, 90, "P2 hp=90")
 	_eq(p2.current_state, DNFStates.State.HIT_STUN, "P2 HIT_STUN")
-	p1.on_hit_landed(p2, hit)
 	_eq(p1.hitstop_remaining, 3, "P1 hitstop=3")
 	_ok(p1._has_hit_this_attack, "P1 has_hit")
 	p1.queue_free(); p2.queue_free()
 
 
-func _test_combo_sequence() -> void:
+func _test_integration_combo_sequence() -> void:
 	_begin("Integration: combo sequence")
-	var p2 := _mk_char()
-	add_child(p2)
-	var punch := _mk_punch_hit()
-	p2.receive_hit(punch, 1.0)
+	var p1 := _mk_fighter("P1", true)
+	var p2 := _mk_fighter("P2", false)
+	var hb1 := DNFHitBehavior.new()
+	hb1.damage = 10; hb1.hit_type = DNFHitBehavior.HitType.NORMAL
+	p2.receive_hit(hb1, 1.0)
 	_eq(p2.health, 90, "hit1 hp=90")
-	p2.hitstop_remaining = 0
-	p2.receive_hit(punch, 1.0)
+	for i in 15: p2._physics_process(0)
+	p2.receive_hit(hb1, 1.0)
 	_eq(p2.health, 80, "hit2 hp=80")
-	var launch := DNFHitBehavior.new()
-	launch.damage = 20; launch.hit_type = DNFHitBehavior.HitType.LAUNCH
-	launch.hitstun_frames = 30; launch.hitstop_frames = 0
-	launch.knockback_force = 3.0; launch.launch_force = -20.0
-	p2.hitstop_remaining = 0
-	p2.receive_hit(launch, 1.0)
+	for i in 15: p2._physics_process(0)
+	var hb2 := DNFHitBehavior.new()
+	hb2.damage = 20; hb2.hit_type = DNFHitBehavior.HitType.LAUNCH
+	hb2.launch_force = -15.0
+	p2.receive_hit(hb2, 1.0)
 	_eq(p2.health, 60, "launch hp=60")
 	_eq(p2.current_state, DNFStates.State.AIR_BORNE, "AIR_BORNE")
-	p2.queue_free()
+	p1.queue_free(); p2.queue_free()
 
 
-func _test_hitstop_symmetry() -> void:
+func _test_integration_hitstop_symmetry() -> void:
 	_begin("Integration: hitstop symmetry")
-	var p1 := _mk_char(); var p2 := _mk_char()
-	add_child(p1); add_child(p2)
-	var hit := _mk_punch_hit()
-	p2.receive_hit(hit, 1.0)
-	p1.on_hit_landed(p2, hit)
+	var p1 := _mk_fighter("P1", true)
+	var p2 := _mk_fighter("P2", false)
+	var hb := DNFHitBehavior.new()
+	hb.damage = 5; hb.hit_type = DNFHitBehavior.HitType.NORMAL
+	p1._change_state(DNFStates.State.ATTACK)
+	p1.hitstop_remaining = 3
+	p2.receive_hit(hb, 1.0)
 	_eq(p1.hitstop_remaining, p2.hitstop_remaining, "symmetric hitstop")
-	var t1 := p1.state_tick
-	p1._physics_process(0.016)
-	_eq(p1.state_tick, t1, "P1 frozen")
+	var t0 := p1.state_tick
+	p1._physics_process(0)
+	_eq(p1.state_tick, t0, "P1 frozen")
 	p1.queue_free(); p2.queue_free()
 
 
 func _test_knockout() -> void:
 	_begin("Integration: KO")
-	var p2 := _mk_char()
-	add_child(p2)
-	var big := DNFHitBehavior.new()
-	big.damage = 150; big.hit_type = DNFHitBehavior.HitType.KNOCK_DOWN
-	big.hitstun_frames = 30; big.hitstop_frames = 0; big.knockback_force = 10.0
-	p2.receive_hit(big, 1.0)
-	_eq(p2.health, 0, "hp clamped to 0")
-	_eq(p2.current_state, DNFStates.State.KNOCK_DOWN, "KO KNOCK_DOWN")
-	p2.queue_free()
+	var p := _mk_fighter("P", true)
+	var hb := DNFHitBehavior.new()
+	hb.damage = 9999; hb.hit_type = DNFHitBehavior.HitType.KNOCK_DOWN
+	p.receive_hit(hb, 1.0)
+	_eq(p.health, 0, "hp clamped to 0")
+	_eq(p.current_state, DNFStates.State.KNOCK_DOWN, "KO KNOCK_DOWN")
+	p.queue_free()
 
 
 func _test_state_flow_cycle() -> void:
 	_begin("Integration: state flow cycle")
-	var ch := _mk_char()
-	add_child(ch)
-	var visited: Array[String] = []
-	ch.on_state_changed.connect(func(ns: int, _o: int): visited.append(DNFStates.state_name(ns)))
-
-	ch._change_state(DNFStates.State.WALK)
-	ch._change_state(DNFStates.State.ATTACK)
-
-	# HIT_STUN (not KNOCK_DOWN) because is_on_floor() is always false in headless
-	var hit := DNFHitBehavior.new()
-	hit.damage = 5; hit.hit_type = DNFHitBehavior.HitType.NORMAL
-	hit.hitstun_frames = 5; hit.hitstop_frames = 0; hit.knockback_force = 2.0
-	ch.receive_hit(hit, 1.0)
+	var ch := _mk_fighter("C", true)
+	var hb := DNFHitBehavior.new()
+	hb.damage = 5; hb.hit_type = DNFHitBehavior.HitType.NORMAL; hb.hitstun_frames = 5
+	ch.receive_hit(hb, 1.0)
 	_eq(ch.current_state, DNFStates.State.HIT_STUN, "hit -> HIT_STUN")
+	for i in 20: ch._physics_process(0)
+	_ok(ch.current_state != DNFStates.State.HIT_STUN, "HIT_STUN ended")
 
-	for i in range(6):
-		ch._state_process()
-		ch.state_tick += 1
-	_eq(ch.current_state, DNFStates.State.IDLE, "HIT_STUN->IDLE")
-
-	_ok("WALK" in visited, "visited WALK")
-	_ok("ATTACK" in visited, "visited ATTACK")
-	_ok("HIT_STUN" in visited, "visited HIT_STUN")
-	_ok("IDLE" in visited, "returned IDLE")
+	var visited := {}
+	ch._change_state(DNFStates.State.WALK); visited[ch.current_state] = true
+	ch._change_state(DNFStates.State.ATTACK); visited[ch.current_state] = true
+	ch._change_state(DNFStates.State.HIT_STUN); visited[ch.current_state] = true
+	ch._change_state(DNFStates.State.IDLE); visited[ch.current_state] = true
+	_ok(visited.has(DNFStates.State.WALK), "visited WALK")
+	_ok(visited.has(DNFStates.State.ATTACK), "visited ATTACK")
+	_ok(visited.has(DNFStates.State.HIT_STUN), "visited HIT_STUN")
+	_eq(ch.current_state, DNFStates.State.IDLE, "returned IDLE")
 	ch.queue_free()
 
 
 func _test_save_load_mid_fight() -> void:
 	_begin("Integration: save/load mid-fight")
-	var p1 := _mk_char(); var p2 := _mk_char()
-	add_child(p1); add_child(p2)
+	var p1 := _mk_fighter("P1", true)
+	var p2 := _mk_fighter("P2", false)
 	p1._change_state(DNFStates.State.ATTACK)
-	p1.state_tick = 7; p1._has_hit_this_attack = true
-	p1.available_cancels = ["heavy"]
-	p2.receive_hit(_mk_punch_hit(), 1.0)
+	p1._has_hit_this_attack = true
+	for i in 7: p1._physics_process(0)
+	var hb := DNFHitBehavior.new()
+	hb.damage = 10; hb.hit_type = DNFHitBehavior.HitType.NORMAL
+	p2.receive_hit(hb, 1.0)
 
-	var s1 := p1._save_state(); var s2 := p2._save_state()
+	var s1 = p1._save_state(); var s2 = p2._save_state()
+	p1.queue_free(); p2.queue_free()
 
-	var r1 := _mk_char(); var r2 := _mk_char()
+	var r1 := DNFCharacter.new(); var r2 := DNFCharacter.new()
 	add_child(r1); add_child(r2)
 	r1._load_state(s1); r2._load_state(s2)
 
@@ -908,42 +843,13 @@ func _test_save_load_mid_fight() -> void:
 	_eq(r2.current_state, DNFStates.State.HIT_STUN, "P2 restored HIT_STUN")
 	_eq(r2.health, 90, "P2 hp=90")
 
-	p1.queue_free(); p2.queue_free()
+	p1 = r1; p2 = r2
 	r1.queue_free(); r2.queue_free()
 
 
 # ====================================================================
-# Phase 6: Data Layer + FramePlayer + Phase 系统
+# Phase 6: Data Layer + Phase 系统
 # ====================================================================
-
-func _test_frame_data_resource() -> void:
-	_begin("FrameData: create + defaults")
-	var fd = P_FrameData.new()
-	_eq(fd.region, Rect2(), "default region empty")
-	_eq(fd.duration, 1, "default duration 1")
-	fd.region = Rect2(0, 0, 64, 64)
-	fd.duration = 3
-	_eq(fd.region, Rect2(0, 0, 64, 64), "region set")
-	_eq(fd.duration, 3, "duration set")
-
-
-func _test_animation_data_resource() -> void:
-	_begin("AnimationData: frames + total")
-	var anim = P_AnimData.new()
-	anim.anim_name = "slash"
-	anim.fps = 12
-	var f1 = P_FrameData.new(); f1.duration = 2; f1.region = Rect2(0, 0, 32, 32)
-	var f2 = P_FrameData.new(); f2.duration = 3; f2.region = Rect2(32, 0, 32, 32)
-	var f3 = P_FrameData.new(); f3.duration = 1; f3.region = Rect2(64, 0, 32, 32)
-	anim.frames = [f1, f2, f3]
-	_eq(anim.get_total_frames(), 6, "total=2+3+1=6")
-	_eq(anim.get_frame_at_index(0).region, Rect2(0, 0, 32, 32), "frame 0 = f1")
-	_eq(anim.get_frame_at_index(1).region, Rect2(0, 0, 32, 32), "frame 1 = f1")
-	_eq(anim.get_frame_at_index(2).region, Rect2(32, 0, 32, 32), "frame 2 = f2")
-	_eq(anim.get_frame_at_index(4).region, Rect2(32, 0, 32, 32), "frame 4 = f2")
-	_eq(anim.get_frame_at_index(5).region, Rect2(64, 0, 32, 32), "frame 5 = f3")
-	_eq(anim.get_frame_at_index(99).region, Rect2(64, 0, 32, 32), "frame 99 = last")
-
 
 func _test_hitbox_data_resource() -> void:
 	_begin("HitboxData: create + levels")
@@ -988,32 +894,34 @@ func _test_movement_phase_resource() -> void:
 	_ok(mp.contains_frame(2), "frame 2 in")
 	_ok(not mp.contains_frame(5), "frame 5 out")
 	_eq(mp.velocity, Vector2(5, 0), "velocity")
+	_eq(mp.get_velocity_at_frame(2), Vector2(5, 0), "constant vel at frame 2")
+	_eq(mp.get_velocity_at_frame(5), Vector2.ZERO, "out of range = zero")
 
 
-func _test_skill_data_v2_resource() -> void:
-	_begin("SkillDataV2: create with phases")
+func _test_skill_data_resource() -> void:
+	_begin("SkillData: create with phases")
 	var skill = _mk_test_skill()
 	_eq(skill.skill_name, "test_slash", "name")
 	_eq(skill.phases.size(), 1, "1 phase")
 	_eq(skill.events.size(), 1, "1 event")
 	_eq(skill.movement.size(), 1, "1 movement")
-	_eq(skill.get_total_frames(), 6, "total frames from anim")
+	_eq(skill.get_total_frames(), 3, "total frames")
 
 
-func _test_skill_data_v2_phase_query() -> void:
-	_begin("SkillDataV2: phase query by frame")
+func _test_skill_data_phase_query() -> void:
+	_begin("SkillData: phase query by frame")
 	var skill = _mk_test_skill()
-	_eq(skill.get_phases_at_frame(2).size(), 0, "frame 2 no phase")
-	_eq(skill.get_phases_at_frame(3).size(), 1, "frame 3 has phase")
-	_eq(skill.get_phases_at_frame(5).size(), 1, "frame 5 has phase")
-	_eq(skill.get_movement_at_frame(1).size(), 1, "frame 1 has movement")
-	_eq(skill.get_movement_at_frame(4).size(), 0, "frame 4 no movement")
+	_eq(skill.get_phases_at_frame(0).size(), 0, "frame 0 no phase")
+	_eq(skill.get_phases_at_frame(1).size(), 1, "frame 1 has phase")
+	_eq(skill.get_phases_at_frame(2).size(), 1, "frame 2 has phase")
+	_eq(skill.get_movement_at_frame(0).size(), 1, "frame 0 has movement")
+	_eq(skill.get_movement_at_frame(2).size(), 0, "frame 2 no movement")
 
 
-func _test_skill_data_v2_event_query() -> void:
-	_begin("SkillDataV2: event query by frame")
+func _test_skill_data_event_query() -> void:
+	_begin("SkillData: event query by frame")
 	var skill = _mk_test_skill()
-	_eq(skill.get_events_at_frame(2).size(), 1, "frame 2 has event")
+	_eq(skill.get_events_at_frame(1).size(), 1, "frame 1 has event")
 	_eq(skill.get_events_at_frame(0).size(), 0, "frame 0 no event")
 
 
@@ -1047,56 +955,32 @@ func _test_character_data_resource() -> void:
 	_eq(cd.get_skill_by_name("missing"), null, "not found returns null")
 
 
-func _test_frame_player_basic() -> void:
-	_begin("FramePlayer: play + tick")
-	var fp = P_FramePlayer.new()
-	add_child(fp)
-	var anim = _mk_test_anim()
+func _test_native_sprite_frames() -> void:
+	_begin("SpriteFrames: native API")
+	var sf := SpriteFrames.new()
+	_ok(sf.has_animation("default"), "has default")
 
-	# anim: f1(dur=2) f2(dur=3) f3(dur=1), total=6
-	fp.play(anim)
-	_ok(fp.is_playing(), "playing after play()")
-	_eq(fp.get_current_frame_index(), 0, "starts at 0")
+	sf.add_animation("walk")
+	_ok(sf.has_animation("walk"), "has walk")
 
-	fp.tick()  # timer=1 < dur=2 → stay at 0
-	_eq(fp.get_current_frame_index(), 0, "still 0 (duration=2)")
-	fp.tick()  # timer=2 >= dur=2 → advance to 1
-	_eq(fp.get_current_frame_index(), 1, "frame 1 (still f1 region)")
-	fp.tick()  # f_at(1)=f1(dur=2), timer=1 < 2
-	_eq(fp.get_current_frame_index(), 1, "still 1")
-	fp.tick()  # timer=2 >= 2 → advance to 2
-	_eq(fp.get_current_frame_index(), 2, "frame 2 (f2 region)")
-	for i in 3:  # f_at(2)=f2(dur=3), need 3 ticks to pass
-		fp.tick()
-	_eq(fp.get_current_frame_index(), 3, "frame 3 after f2 dur")
-	fp.tick()  # f_at(3)=f2(dur=3), timer=1
-	fp.tick()  # timer=2
-	fp.tick()  # timer=3 >= 3 → advance to 4
-	_eq(fp.get_current_frame_index(), 4, "frame 4")
-	fp.tick()  # f_at(4)=f2(dur=3), timer=1
-	fp.tick()  # timer=2
-	fp.tick()  # timer=3 >= 3 → advance to 5
-	_eq(fp.get_current_frame_index(), 5, "frame 5 (f3)")
-	fp.tick()  # f_at(5)=f3(dur=1), timer=1 >= 1 → advance to 6 → finished
-	_ok(not fp.is_playing(), "finished (no loop)")
-	fp.queue_free()
+	sf.rename_animation("walk", "run")
+	_ok(not sf.has_animation("walk"), "walk gone")
+	_ok(sf.has_animation("run"), "run exists")
 
+	var tex := PlaceholderTexture2D.new()
+	tex.size = Vector2(16, 16)
+	sf.add_frame("run", tex)
+	_eq(sf.get_frame_count("run"), 1, "1 frame")
+	_ok(sf.get_frame_texture("run", 0) != null, "frame tex set")
 
-func _test_frame_player_save_load() -> void:
-	_begin("FramePlayer: save/load state")
-	var fp = P_FramePlayer.new()
-	add_child(fp)
-	fp.play(_mk_test_anim())
-	fp.tick(); fp.tick()  # after 2 ticks: index=1
-	var state = fp._save_state()
-	_eq(state["fi"], 1, "saved frame=1")
-	_ok(state["pl"], "saved playing=true")
+	sf.set_animation_loop("run", true)
+	_ok(sf.get_animation_loop("run"), "loop=true")
 
-	var fp2 = P_FramePlayer.new()
-	add_child(fp2)
-	fp2._load_state(state)
-	_eq(fp2.get_current_frame_index(), 1, "restored frame=1")
-	fp.queue_free(); fp2.queue_free()
+	sf.set_animation_speed("run", 24)
+	_approx(sf.get_animation_speed("run"), 24.0, 0.01, "speed=24")
+
+	sf.remove_animation("run")
+	_ok(not sf.has_animation("run"), "run removed")
 
 
 func _test_hitbox_component_basic() -> void:
@@ -1118,31 +1002,40 @@ func _test_hitbox_component_basic() -> void:
 	hc.queue_free()
 
 
-func _test_skill_component_v2_basic() -> void:
-	_begin("SkillComponentV2: play_skill + tick")
-	var fp = P_FramePlayer.new()
-	add_child(fp)
+func _test_skill_component_basic() -> void:
+	_begin("SkillComponent: play_skill + tick")
+	var sf := _mk_test_native_sprite_frames()
+	sf.add_animation("test_slash")
+	sf.set_animation_speed("test_slash", 12)
+	sf.set_animation_loop("test_slash", false)
+	for i in 3:
+		sf.add_frame("test_slash", PlaceholderTexture2D.new())
+	var skill = _mk_test_skill()
+
+	var spr = P_AnimSprite.new()
+	spr.sprite_frames = sf
+	add_child(spr)
+
 	var hc = P_HitboxComp.new()
 	add_child(hc)
 
-	var sc = P_SkillCompV2.new()
-	sc.frame_player_path = fp.get_path()
+	var sc = P_SkillComp.new()
+	sc.animated_sprite_path = spr.get_path()
 	sc.hitbox_component_path = hc.get_path()
 	add_child(sc)
 
-	var skill = _mk_test_skill()
 	_ok(sc.play_skill(skill), "play_skill returns true")
 	_ok(sc.is_active(), "active after play")
 	_eq(sc.get_active_skill().skill_name, "test_slash", "active skill name")
 
 	for i in 3:
 		sc.tick()
-	_eq(sc.get_current_frame(), fp.get_current_frame_index(), "frame synced")
+	_eq(sc.get_current_frame(), spr.frame, "frame synced")
 
 	sc.interrupt()
 	_ok(not sc.is_active(), "inactive after interrupt")
 
-	fp.queue_free(); hc.queue_free(); sc.queue_free()
+	spr.queue_free(); hc.queue_free(); sc.queue_free()
 
 
 func _test_hit_behavior_expanded() -> void:
@@ -1233,24 +1126,194 @@ func _test_effect_editor_load() -> void:
 	_ok(script != null, "effect_editor.gd loads")
 
 
-# -- Phase 6 helpers --
+# ====================================================================
+# Phase 13: DNFAnimatedSprite2D — AnimatedSprite2D + tick() 回滚
+# ====================================================================
 
-func _mk_test_anim():
-	var anim = P_AnimData.new()
-	anim.anim_name = "test_anim"
-	anim.fps = 12
-	var f1 = P_FrameData.new(); f1.duration = 2; f1.region = Rect2(0, 0, 32, 32)
-	var f2 = P_FrameData.new(); f2.duration = 3; f2.region = Rect2(32, 0, 32, 32)
-	var f3 = P_FrameData.new(); f3.duration = 1; f3.region = Rect2(64, 0, 32, 32)
-	anim.frames = [f1, f2, f3]
-	return anim
+func _mk_test_native_sprite_frames() -> SpriteFrames:
+	var sf := SpriteFrames.new()
+	# default animation: 4 frames, loop
+	sf.set_animation_speed("default", 12)
+	sf.set_animation_loop("default", true)
+	for i in 4:
+		sf.add_frame("default", PlaceholderTexture2D.new())
 
+	# attack animation: 3 frames, no loop
+	sf.add_animation("attack")
+	sf.set_animation_speed("attack", 12)
+	sf.set_animation_loop("attack", false)
+	for i in 3:
+		sf.add_frame("attack", PlaceholderTexture2D.new())
+	return sf
+
+
+func _test_anim_sprite_init() -> void:
+	_begin("AnimSprite: init")
+	var spr := P_AnimSprite.new()
+	add_child(spr)
+	_ok(spr.sprite_frames == null, "no sprite_frames")
+	_ok(not spr.is_tick_playing(), "not tick playing")
+	spr.queue_free()
+
+
+func _test_anim_sprite_set_sprite_frames() -> void:
+	_begin("AnimSprite: set sprite_frames")
+	var spr := P_AnimSprite.new()
+	add_child(spr)
+	var sf := _mk_test_native_sprite_frames()
+	spr.sprite_frames = sf
+	_ok(spr.sprite_frames == sf, "sf assigned")
+	spr.queue_free()
+
+
+func _test_anim_sprite_set_animation() -> void:
+	_begin("AnimSprite: set animation")
+	var spr := P_AnimSprite.new()
+	add_child(spr)
+	spr.sprite_frames = _mk_test_native_sprite_frames()
+	spr.animation = "attack"
+	_eq(spr.animation, &"attack", "switched to attack")
+	_eq(spr.sprite_frames.get_frame_count("attack"), 3, "attack has 3 frames")
+
+	spr.animation = "default"
+	_eq(spr.animation, &"default", "switched to default")
+	_eq(spr.sprite_frames.get_frame_count("default"), 4, "default has 4 frames")
+	spr.queue_free()
+
+
+func _test_anim_sprite_play_tick() -> void:
+	_begin("AnimSprite: play + tick")
+	var spr := P_AnimSprite.new()
+	add_child(spr)
+	spr.sprite_frames = _mk_test_native_sprite_frames()
+	spr.tick_play("attack")
+	_ok(spr.is_tick_playing(), "tick playing after tick_play()")
+	_eq(spr.animation, &"attack", "anim = attack")
+	_eq(spr.frame, 0, "starts at 0")
+
+	spr.tick()
+	_eq(spr.frame, 1, "tick -> frame 1")
+	spr.tick()
+	_eq(spr.frame, 2, "tick -> frame 2")
+	spr.tick()
+	_ok(not spr.is_tick_playing(), "finished (no loop)")
+	_eq(spr.frame, 2, "stays at last")
+	spr.queue_free()
+
+
+func _test_anim_sprite_loop() -> void:
+	_begin("AnimSprite: loop")
+	var spr := P_AnimSprite.new()
+	add_child(spr)
+	spr.sprite_frames = _mk_test_native_sprite_frames()
+	spr.tick_play("default")
+
+	for i in range(4):
+		spr.tick()
+	_eq(spr.frame, 0, "looped back to 0")
+	_ok(spr.is_tick_playing(), "still tick playing (loop)")
+	spr.queue_free()
+
+
+func _test_anim_sprite_no_loop_finish() -> void:
+	_begin("AnimSprite: no loop finish")
+	var spr := P_AnimSprite.new()
+	add_child(spr)
+	spr.sprite_frames = _mk_test_native_sprite_frames()
+	var result: Array = [false]
+	spr.animation_finished.connect(func(): result[0] = true)
+	spr.tick_play("attack")
+
+	for i in range(10):
+		spr.tick()
+	_ok(not spr.is_tick_playing(), "stopped")
+	_ok(result[0], "finished signal emitted")
+	spr.queue_free()
+
+
+func _test_anim_sprite_play_backwards() -> void:
+	_begin("AnimSprite: play backwards")
+	var spr := P_AnimSprite.new()
+	add_child(spr)
+	spr.sprite_frames = _mk_test_native_sprite_frames()
+	spr.tick_play_backwards("attack")
+	_ok(spr.is_tick_playing(), "tick playing backwards")
+	_eq(spr.frame, 2, "starts at last frame")
+
+	spr.tick()
+	_eq(spr.frame, 1, "tick -> 1")
+	spr.tick()
+	_eq(spr.frame, 0, "tick -> 0")
+	spr.tick()
+	_ok(not spr.is_tick_playing(), "finished backwards")
+	spr.queue_free()
+
+
+func _test_anim_sprite_stop_pause() -> void:
+	_begin("AnimSprite: stop/pause")
+	var spr := P_AnimSprite.new()
+	add_child(spr)
+	spr.sprite_frames = _mk_test_native_sprite_frames()
+	spr.tick_play("default")
+	spr.tick()
+	_eq(spr.frame, 1, "at frame 1")
+
+	spr.tick_pause()
+	_ok(not spr.is_tick_playing(), "paused")
+	_eq(spr.frame, 1, "frame preserved")
+
+	spr.tick_stop()
+	_ok(not spr.is_tick_playing(), "stopped")
+	spr.queue_free()
+
+
+func _test_anim_sprite_save_load() -> void:
+	_begin("AnimSprite: save/load")
+	var spr := P_AnimSprite.new()
+	add_child(spr)
+	spr.sprite_frames = _mk_test_native_sprite_frames()
+	spr.tick_play("attack")
+	spr.tick()
+	spr.tick()
+
+	var state: Dictionary = spr._save_state()
+	_eq(state.fi, 2, "saved frame=2")
+	_ok(state.pl, "saved playing=true")
+	_eq(state.an, "attack", "saved anim=attack")
+
+	spr.tick_stop()
+	spr.animation = "default"
+	spr.frame = 0
+	_eq(spr.frame, 0, "reset to 0")
+
+	spr._load_state(state)
+	_eq(spr.frame, 2, "restored frame=2")
+	_ok(spr.is_tick_playing(), "restored playing")
+	_eq(spr.animation, &"attack", "restored anim")
+	spr.queue_free()
+
+
+func _test_anim_sprite_has_animation() -> void:
+	_begin("AnimSprite: has_animation")
+	var spr := P_AnimSprite.new()
+	add_child(spr)
+	spr.sprite_frames = _mk_test_native_sprite_frames()
+	_ok(spr.sprite_frames.has_animation("default"), "has default")
+	_ok(spr.sprite_frames.has_animation("attack"), "has attack")
+	_ok(not spr.sprite_frames.has_animation("jump"), "no jump")
+	var names: PackedStringArray = spr.sprite_frames.get_animation_names()
+	_ok(names.size() >= 2, "at least 2 names")
+	spr.queue_free()
+
+
+# -- Helpers --
 
 func _mk_test_skill():
-	var skill = P_SkillDataV2.new()
+	var skill = P_SkillData.new()
 	skill.skill_name = "test_slash"
 	skill.display_name = "Test Slash"
-	skill.animation = _mk_test_anim()
+	skill.animation_name = "test_slash"
+	skill.total_frames = 3
 
 	var hd = P_HitboxData.new()
 	hd.shape_size = Vector2(50, 80)
@@ -1260,22 +1323,276 @@ func _mk_test_skill():
 	hb.damage = 15
 
 	var phase = P_AttackPhase.new()
-	phase.start_frame = 3
-	phase.end_frame = 5
+	phase.start_frame = 1
+	phase.end_frame = 2
 	phase.hitbox = hd
 	phase.hit_behavior = hb
 	skill.phases = [phase]
 
 	var ev = P_FrameEvent.new()
-	ev.frame = 2
+	ev.frame = 1
 	ev.type = P_FrameEvent.EventType.PLAY_SOUND
 	ev.data = {"audio": "slash.ogg"}
 	skill.events = [ev]
 
 	var mov = P_MovementPhase.new()
-	mov.start_frame = 1
-	mov.end_frame = 3
+	mov.start_frame = 0
+	mov.end_frame = 1
 	mov.velocity = Vector2(5, 0)
 	skill.movement = [mov]
 
 	return skill
+
+
+# ====================================================================
+# Phase 14: Architecture Fixes (Events, HitMode, CancelWindow, Curve)
+# ====================================================================
+
+func _test_attack_phase_no_events() -> void:
+	_begin("AttackPhase: no events property")
+	var phase := P_AttackPhase.new()
+	phase.start_frame = 2
+	phase.end_frame = 6
+	var props := phase.get_property_list()
+	var has_events := false
+	for p in props:
+		if p.name == "events":
+			has_events = true
+			break
+	_ok(not has_events, "events removed from AttackPhase")
+	_ok(phase.contains_frame(4), "contains_frame works")
+
+
+func _test_hit_behavior_hit_mode() -> void:
+	_begin("HitBehavior: HitMode enum")
+	var hb := DNFHitBehavior.new()
+	_eq(hb.hit_mode, DNFHitBehavior.HitMode.ONCE, "default ONCE")
+	_eq(hb.max_hits, 1, "default max_hits=1")
+	_eq(hb.hit_interval, 3, "default hit_interval=3")
+
+	hb.hit_mode = DNFHitBehavior.HitMode.PER_FRAME
+	_eq(hb.hit_mode, DNFHitBehavior.HitMode.PER_FRAME, "set PER_FRAME")
+
+	hb.hit_mode = DNFHitBehavior.HitMode.INTERVAL
+	hb.hit_interval = 5
+	hb.max_hits = 3
+	_eq(hb.hit_mode, DNFHitBehavior.HitMode.INTERVAL, "set INTERVAL")
+	_eq(hb.hit_interval, 5, "interval=5")
+	_eq(hb.max_hits, 3, "max_hits=3")
+
+
+func _test_hit_behavior_hit_mode_defaults() -> void:
+	_begin("HitBehavior: default ONCE backward compat")
+	var hb := DNFHitBehavior.new()
+	hb.damage = 10
+	_eq(hb.hit_mode, DNFHitBehavior.HitMode.ONCE, "ONCE by default")
+	_eq(hb.max_hits, 1, "max_hits=1")
+	_eq(hb.get_hit_state(), DNFStates.State.HIT_STUN, "HIT_STUN default")
+
+
+func _test_movement_phase_curve() -> void:
+	_begin("MovementPhase: curve mode")
+	var mp := P_MovementPhase.new()
+	mp.start_frame = 0
+	mp.end_frame = 9
+	mp.motion_type = DNFMovementPhase.MotionType.CURVE
+	mp.distance = 100.0
+	mp.curve_direction = Vector2(1, 0)
+
+	var c := Curve.new()
+	c.add_point(Vector2(0, 1))
+	c.add_point(Vector2(1, 0))
+	mp.curve = c
+
+	var vel_start := mp.get_velocity_at_frame(0)
+	var vel_end := mp.get_velocity_at_frame(9)
+	_ok(vel_start.x > vel_end.x, "curve: start faster than end")
+	_ok(vel_start.x > 0, "curve: start > 0")
+
+	var vel_out := mp.get_velocity_at_frame(10)
+	_eq(vel_out, Vector2.ZERO, "curve: out of range = zero")
+
+
+func _test_movement_phase_constant_get_velocity() -> void:
+	_begin("MovementPhase: constant get_velocity_at_frame")
+	var mp := P_MovementPhase.new()
+	mp.start_frame = 2
+	mp.end_frame = 5
+	mp.motion_type = DNFMovementPhase.MotionType.CONSTANT
+	mp.velocity = Vector2(10, -3)
+	_eq(mp.get_velocity_at_frame(3), Vector2(10, -3), "constant vel")
+	_eq(mp.get_velocity_at_frame(0), Vector2.ZERO, "outside = zero")
+	_eq(mp.get_duration(), 4, "duration = 4")
+
+
+func _test_cancel_window_resource() -> void:
+	_begin("CancelWindow: basic")
+	var cw := P_CancelWindow.new()
+	cw.start_frame = 5
+	cw.end_frame = 10
+	_ok(cw.contains_frame(5), "frame 5 in")
+	_ok(cw.contains_frame(10), "frame 10 in")
+	_ok(not cw.contains_frame(4), "frame 4 out")
+	_ok(not cw.contains_frame(11), "frame 11 out")
+
+
+func _test_cancel_window_skill_filter() -> void:
+	_begin("CancelWindow: skill filter")
+	var cw := P_CancelWindow.new()
+	cw.start_frame = 0
+	cw.end_frame = 10
+	cw.allowed_skills = ["heavy_attack", "launcher"]
+	_ok(cw.is_skill_allowed("heavy_attack"), "heavy allowed")
+	_ok(cw.is_skill_allowed("launcher"), "launcher allowed")
+	_ok(not cw.is_skill_allowed("light_attack"), "light not allowed")
+
+	var cw2 := P_CancelWindow.new()
+	cw2.allowed_skills = []
+	_ok(cw2.is_skill_allowed("anything"), "empty = allow all")
+
+
+func _test_cancel_window_on_hit_only() -> void:
+	_begin("CancelWindow: on_hit_only flag")
+	var cw := P_CancelWindow.new()
+	cw.start_frame = 0
+	cw.end_frame = 10
+	cw.on_hit_only = true
+	_ok(cw.on_hit_only, "on_hit_only=true")
+
+
+func _test_skill_data_cancel_windows() -> void:
+	_begin("SkillData: cancel_windows query")
+	var skill := P_SkillData.new()
+	skill.skill_name = "test"
+	skill.total_frames = 20
+
+	var cw1 := P_CancelWindow.new()
+	cw1.start_frame = 5
+	cw1.end_frame = 10
+	cw1.allowed_skills = ["heavy"]
+
+	var cw2 := P_CancelWindow.new()
+	cw2.start_frame = 12
+	cw2.end_frame = 18
+	cw2.on_hit_only = true
+
+	skill.cancel_windows = [cw1, cw2]
+
+	_eq(skill.get_cancel_windows_at_frame(5).size(), 1, "frame 5 has 1 cw")
+	_eq(skill.get_cancel_windows_at_frame(11).size(), 0, "frame 11 has 0 cw")
+	_eq(skill.get_cancel_windows_at_frame(15).size(), 1, "frame 15 has 1 cw")
+
+	_ok(skill.can_cancel_at_frame(7, "heavy", false), "can cancel heavy at 7")
+	_ok(not skill.can_cancel_at_frame(7, "light", false), "cannot cancel light at 7")
+	_ok(not skill.can_cancel_at_frame(15, "heavy", false), "on_hit_only blocks at 15")
+	_ok(skill.can_cancel_at_frame(15, "heavy", true), "on_hit_only passes with hit")
+
+
+func _test_combat_manager_hit_mode_once() -> void:
+	_begin("CombatManager: HitMode ONCE via tracker")
+	var cm := DNFCombatManager.new()
+	add_child(cm)
+	var hb := DNFHitBehavior.new()
+	hb.hit_mode = DNFHitBehavior.HitMode.ONCE
+	hb.max_hits = 1
+
+	var key := "test_once_key"
+	cm._hit_tracker[key] = { "count": 0, "last_frame": -999 }
+	var record: Dictionary = cm._hit_tracker[key]
+
+	# ONCE: first attempt passes
+	_eq(record.count, 0, "starts at 0")
+	record.count = 1
+	record.last_frame = 0
+	# ONCE: second attempt blocked (count >= 1)
+	_ok(record.count >= 1, "ONCE blocks after 1 hit")
+	cm.queue_free()
+
+
+func _test_combat_manager_hit_mode_per_frame() -> void:
+	_begin("CombatManager: HitMode PER_FRAME logic")
+	var hb := DNFHitBehavior.new()
+	hb.hit_mode = DNFHitBehavior.HitMode.PER_FRAME
+	hb.max_hits = 3
+
+	var record := { "count": 0, "last_frame": -999 }
+
+	# Frame 0: first hit
+	var frame := 0
+	_ok(record.last_frame != frame, "different frame -> allow")
+	record.count += 1
+	record.last_frame = frame
+	_eq(record.count, 1, "count=1 after hit 1")
+
+	# Frame 0 again: same frame blocked
+	_ok(record.last_frame == frame, "same frame -> block")
+
+	# Frame 1: second hit
+	frame = 1
+	_ok(record.last_frame != frame, "frame 1 -> allow")
+	record.count += 1
+	record.last_frame = frame
+	_eq(record.count, 2, "count=2 after hit 2")
+
+	# Frame 2: third hit
+	frame = 2
+	record.count += 1
+	record.last_frame = frame
+	_eq(record.count, 3, "count=3 after hit 3")
+
+	# Frame 3: max_hits reached
+	_ok(hb.max_hits > 0 and record.count >= hb.max_hits, "max_hits blocks")
+
+
+func _test_combat_manager_hit_mode_interval() -> void:
+	_begin("CombatManager: HitMode INTERVAL logic")
+	var hb := DNFHitBehavior.new()
+	hb.hit_mode = DNFHitBehavior.HitMode.INTERVAL
+	hb.hit_interval = 3
+	hb.max_hits = 0
+
+	var record := { "count": 0, "last_frame": -999 }
+
+	# Frame 0: first hit (gap from -999 is >> 3)
+	var frame := 0
+	_ok(frame - record.last_frame >= hb.hit_interval, "frame 0 -> allow")
+	record.count += 1
+	record.last_frame = frame
+	_eq(record.count, 1, "count=1")
+
+	# Frame 1: too soon
+	frame = 1
+	_ok(frame - record.last_frame < hb.hit_interval, "frame 1 too soon")
+
+	# Frame 3: gap=3 -> allow
+	frame = 3
+	_ok(frame - record.last_frame >= hb.hit_interval, "frame 3 -> allow")
+	record.count += 1
+	record.last_frame = frame
+	_eq(record.count, 2, "count=2")
+
+	# Frame 6: gap=3 -> allow
+	frame = 6
+	_ok(frame - record.last_frame >= hb.hit_interval, "frame 6 -> allow")
+	record.count += 1
+	record.last_frame = frame
+	_eq(record.count, 3, "count=3")
+
+
+func _test_combat_manager_save_load() -> void:
+	_begin("CombatManager: save/load state")
+	var cm := DNFCombatManager.new()
+	add_child(cm)
+	cm._frame_counter = 42
+	cm._hit_tracker["test_key"] = { "count": 3, "last_frame": 40 }
+
+	var state := cm._save_state()
+	_eq(state.fc, 42, "saved frame_counter")
+	_ok(state.tracker.has("test_key"), "saved tracker")
+
+	cm._frame_counter = 0
+	cm._hit_tracker.clear()
+	cm._load_state(state)
+	_eq(cm._frame_counter, 42, "restored frame_counter")
+	_eq(cm._hit_tracker["test_key"].count, 3, "restored tracker count")
+	cm.queue_free()

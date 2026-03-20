@@ -30,10 +30,10 @@
 1. 在 **项目 → 项目设置 → 插件** 中启用 `DNF Framework`
 2. 重启编辑器（确保自定义类型注册生效）
 3. 确认 Inspector 中可以创建以下 Resource 类型：
-   - `DNFFrameData`、`DNFAnimationData`
+   - `SpriteFrames`（Godot 原生帧动画资源）
    - `DNFHitboxData`、`DNFHitBehavior`
    - `DNFAttackPhase`、`DNFMovementPhase`、`DNFFrameEvent`
-   - `DNFSkillDataV2`、`DNFInputCondition`、`DNFSkillUIData`
+   - `DNFSkillData`、`DNFInputCondition`、`DNFSkillUIData`
    - `DNFCharacterStats`、`DNFCharacterData`
 
 ---
@@ -45,11 +45,11 @@ DNF Framework 的核心设计原则是**数据驱动 + 区间控制**：
 ```
 CharacterData（角色总入口）
   ├── stats: CharacterStats（属性：HP/MP/力量/智力/暴击…）
-  ├── atlas: Texture2D（精灵图集）
-  ├── animations: { "idle": AnimationData, "walk": AnimationData, ... }
+  ├── sprite_frames: SpriteFrames（原生 Godot 帧动画资源，包含 idle/walk/attack 等所有动画）
   └── skills: [
-        SkillDataV2（技能定义）
-          ├── animation: AnimationData（显示层 — 纯帧序列）
+        SkillData（技能定义）
+          ├── animation_name: String（引用 SpriteFrames 中的动画名，如 "ghost_slash"）
+          ├── total_frames: int（动画总帧数）
           ├── phases: [ AttackPhase, ... ]（逻辑层 — 攻击区间）
           ├── events: [ FrameEvent, ... ]（时间轴事件）
           └── movement: [ MovementPhase, ... ]（位移区间）
@@ -90,46 +90,25 @@ CharacterData（角色总入口）
 
 ---
 
-## 4. 配置帧动画 (AnimationData + FrameData)
+## 4. 配置帧动画 (SpriteFrames)
 
-### 4.1 创建 FrameData（单帧）
-
-每个 `DNFFrameData` 代表精灵图集中的**一个显示帧**：
-
-| 属性 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `region` | `Rect2` | (0,0,0,0) | 在 atlas 图集中的裁剪区域 (x, y, w, h) |
-| `duration` | `int` | 1 | 该帧持续的逻辑帧数（不是秒） |
-| `anchor_offset` | `Vector2` | (0,0) | 精灵的锚点偏移（用于对齐脚底等） |
-
-### 4.2 创建 AnimationData（帧序列）
-
-新建 `DNFAnimationData` 资源：
-
-| 属性 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `anim_name` | `String` | "" | 动画名称（如 "idle"、"slash"） |
-| `fps` | `int` | 12 | 帧率（用于预览和编辑器） |
-| `frames` | `Array` | [] | FrameData 数组，按播放顺序排列 |
-| `loop` | `bool` | false | 是否循环播放 |
-| `atlas` | `Texture2D` | null | 精灵图集纹理 |
+直接使用 **Godot 原生 `SpriteFrames` 资源**，无需自定义数据结构。
 
 ### 操作步骤
 
-1. 准备好角色的精灵图集（SpriteSheet）
-2. 新建 `DNFAnimationData` 资源，命名如 `slash_anim.tres`
-3. 设置 `atlas` 为你的精灵图集
-4. 在 `frames` 数组中添加 `DNFFrameData` 元素
-5. 为每个 FrameData 设置 `region`（对应图集中该帧的矩形区域）和 `duration`
+1. 在 FileSystem 中右键 → **新建资源** → 选择 `SpriteFrames` → 保存为 `.tres` 文件
+2. 双击打开，使用 Godot 自带的 **SpriteFrames Inspector** 编辑器
+3. 添加动画（如 "idle"、"slash"、"walk"）
+4. 为每个动画拖入帧纹理（支持独立纹理或 SpriteSheet 切片）
+5. 设置 FPS、循环等属性
 
-**示例：3 帧的斩击动画**
+或者，在场景中添加 `DNFAnimatedSprite2D` 节点，直接在 Inspector 中创建/编辑 SpriteFrames。
 
-```
-frames[0]: region=(0, 0, 64, 64),  duration=2   ← 准备动作，持续 2 帧
-frames[1]: region=(64, 0, 64, 64), duration=3   ← 挥刀动作，持续 3 帧
-frames[2]: region=(128, 0, 64, 64), duration=1  ← 收招动作，持续 1 帧
-总逻辑帧数 = 2 + 3 + 1 = 6
-```
+**优势：**
+- Godot 原生编辑器，无需额外学习
+- 自带可视化帧管理、预览播放
+- 支持 per-frame duration
+- `DNFAnimatedSprite2D` 继承 `AnimatedSprite2D`，直接兼容
 
 ---
 
@@ -181,9 +160,9 @@ frames[2]: region=(128, 0, 64, 64), duration=1  ← 收招动作，持续 1 帧
 
 ---
 
-## 7. 配置技能 (SkillDataV2)
+## 7. 配置技能 (SkillData)
 
-`DNFSkillDataV2` 是技能的核心定义，由以下部分组成：
+`DNFSkillData` 是技能的核心定义，由以下部分组成：
 
 ### 基本信息
 
@@ -191,7 +170,8 @@ frames[2]: region=(128, 0, 64, 64), duration=1  ← 收招动作，持续 1 帧
 |------|------|------|
 | `skill_name` | `String` | 技能内部名称（唯一标识，如 "ghost_slash"） |
 | `display_name` | `String` | 显示名称（如 "鬼斩"） |
-| `animation` | `Resource` | 关联的 DNFAnimationData |
+| `animation_name` | `String` | 对应 SpriteFrames 中的动画名（如 "ghost_slash"） |
+| `total_frames` | `int` | 动画总帧数 |
 
 ### 消耗与冷却
 
@@ -354,21 +334,17 @@ relative_to_facing = true ← 朝左时自动变为 (-8, 0)
 | `character_name` | `String` | 角色内部名称 |
 | `display_name` | `String` | 显示名称 |
 | `portrait` | `Texture2D` | 角色立绘 |
-| `atlas` | `Texture2D` | 角色精灵图集 |
-| `animations` | `Dictionary` | 动画字典 (key=动画名, value=DNFAnimationData) |
-| `skills` | `Array` | 技能列表 (DNFSkillDataV2) |
+| `sprite_frames` | `SpriteFrames` | 原生 SpriteFrames 资源（包含所有动画：idle/walk/attack 等） |
+| `skills` | `Array` | 技能列表 (DNFSkillData) |
 | `stats` | `Resource` | 角色属性 (DNFCharacterStats) |
 
 ### 操作步骤
 
 1. 新建 `DNFCharacterData` → 保存为 `warrior.tres`
 2. 设置 `character_name = "warrior"`
-3. 指定 `atlas` 为角色精灵图集
-4. 在 `animations` 中添加键值对：
-   - `"idle"` → idle_anim.tres
-   - `"walk"` → walk_anim.tres
-   - `"slash"` → slash_anim.tres
-5. 在 `skills` 数组中添加技能资源
+3. 创建 `SpriteFrames` 资源，添加 idle/walk/slash 等动画并拖入帧纹理
+4. 将 `sprite_frames` 指向该 SpriteFrames 资源
+5. 在 `skills` 数组中添加技能资源（每个技能通过 `animation_name` 引用 SpriteFrames 中的动画名）
 6. 指定 `stats` 为之前创建的 CharacterStats 资源
 
 ---
@@ -379,20 +355,21 @@ relative_to_facing = true ← 朝左时自动变为 (-8, 0)
 
 ```
 CharacterRoot (CharacterBody2D 或 DNFCharacter)
-  ├── Sprite2D                  ← 角色精灵
-  ├── DNFFramePlayer            ← 帧播放器（驱动 Sprite 显示）
+  ├── DNFAnimatedSprite2D       ← 帧动画精灵（自带显示 + tick 驱动）
   ├── DNFHitboxComponent        ← 攻击碰撞体（运行时动态创建）
   ├── DNFHurtboxComponent       ← 受击碰撞体
-  └── DNFSkillComponentV2       ← 技能执行组件
+  └── DNFSkillComponent         ← 技能执行组件
 ```
 
 ### 各组件设置
 
-**DNFFramePlayer**
-- 在 Inspector 中将 `sprite` 属性指向场景中的 `Sprite2D` 节点
+**DNFAnimatedSprite2D**
+- 在 Inspector 中设 `Sprite Frames` 属性为一个 `SpriteFrames` 资源（Godot 原生）
+- 选择要播放的 `Animation` 名称
+- 支持 `tick()` 驱动（回滚兼容）和标准 `play()` 驱动
 
-**DNFSkillComponentV2**
-- 将 `frame_player_path` 指向 `DNFFramePlayer` 节点
+**DNFSkillComponent**
+- 将 `animated_sprite_path` 指向 `DNFAnimatedSprite2D` 节点
 - 将 `hitbox_component_path` 指向 `DNFHitboxComponent` 节点
 
 **DNFHurtboxComponent**
@@ -402,7 +379,7 @@ CharacterRoot (CharacterBody2D 或 DNFCharacter)
 
 ```gdscript
 # 获取组件引用
-@onready var skill_comp: DNFSkillComponentV2 = $DNFSkillComponentV2
+@onready var skill_comp: DNFSkillComponent = $DNFSkillComponent
 
 # 加载角色数据
 var char_data: DNFCharacterData = preload("res://data/warrior.tres")
@@ -431,22 +408,13 @@ skill_comp.event_fired.connect(func(event): print("事件触发: ", event.type))
 
 ### 第一步：创建帧动画
 
-新建 `ghost_slash_anim.tres` (DNFAnimationData)：
+在角色的 `SpriteFrames` 资源中添加 "ghost_slash" 动画：
 
-```
-anim_name = "ghost_slash"
-fps = 12
-loop = false
-atlas = 鬼剑士精灵图集.png
-
-frames:
-  [0] region=(0,0,96,96),    duration=3   ← 举刀准备
-  [1] region=(96,0,96,96),   duration=2   ← 挥刀中
-  [2] region=(192,0,96,96),  duration=4   ← 刀光展开
-  [3] region=(288,0,96,96),  duration=2   ← 收招
-  
-总帧数 = 3 + 2 + 4 + 2 = 11
-```
+1. 打开 SpriteFrames 编辑器
+2. 点击 "添加动画"，命名为 `ghost_slash`
+3. 设置 FPS = 12，不循环
+4. 拖入 4 帧纹理（举刀 → 挥刀 → 刀光 → 收招）
+5. 记录总帧数 = 4（用于 SkillData.total_frames）
 
 ### 第二步：创建碰撞体模板
 

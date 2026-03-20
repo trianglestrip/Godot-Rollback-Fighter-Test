@@ -2,42 +2,36 @@
 extends Control
 
 ## 时间轴主面板 — 包含所有轨道和标尺
-## Phase 10 Timeline 编辑器根节点
 
 signal frame_changed(frame: int)
 signal playback_toggled(playing: bool)
+signal phase_selected(phase_index: int)
+signal event_selected(event_index: int)
+signal movement_selected(movement_index: int)
 
-## 总帧数
 var total_frames: int = 60:
 	set(v):
 		total_frames = maxi(1, v)
 		_queue_redraw_all()
-## 当前帧
 var current_frame: int = 0:
 	set(v):
 		current_frame = clampi(v, 0, total_frames)
 		frame_changed.emit(current_frame)
 		_queue_redraw_all()
-## 每帧像素宽度
 var frame_width: float = 16.0:
 	set(v):
 		frame_width = maxf(4.0, v)
 		_queue_redraw_all()
-## 缩放
 var zoom: float = 1.0:
 	set(v):
 		zoom = clampf(v, 0.25, 4.0)
 		frame_width = 16.0 * zoom
 		_queue_redraw_all()
-## 帧率（用于播放）
 var fps: int = 12
 
-## 是否正在播放
 var _playing: bool = false
-## 播放累计时间
 var _play_accum: float = 0.0
 
-## 子控件引用
 var _toolbar: HBoxContainer
 var _play_btn: Button
 var _frame_label: Label
@@ -46,8 +40,6 @@ var _total_spinbox: SpinBox
 var _frame_ruler: Control
 var _track_container: VBoxContainer
 var _scroll: ScrollContainer
-
-## 当前加载的技能数据
 var _skill_data: Resource
 
 
@@ -69,7 +61,6 @@ func _process(delta: float) -> void:
 
 
 func _build_ui() -> void:
-	# 清空已有子节点
 	for c in get_children():
 		c.queue_free()
 
@@ -79,7 +70,6 @@ func _build_ui() -> void:
 	vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	add_child(vbox)
 
-	# 工具栏
 	_toolbar = HBoxContainer.new()
 	_toolbar.add_theme_constant_override("separation", 8)
 	vbox.add_child(_toolbar)
@@ -90,17 +80,30 @@ func _build_ui() -> void:
 	_play_btn.pressed.connect(_on_play_pressed)
 	_toolbar.add_child(_play_btn)
 
+	var stop_btn := Button.new()
+	stop_btn.text = "⏹"
+	stop_btn.tooltip_text = "停止"
+	stop_btn.pressed.connect(_on_stop_pressed)
+	_toolbar.add_child(stop_btn)
+
 	_frame_label = Label.new()
 	_frame_label.text = "帧: 0"
 	_frame_label.custom_minimum_size.x = 80
 	_toolbar.add_child(_frame_label)
+
+	var sep := VSeparator.new()
+	_toolbar.add_child(sep)
+
+	var zoom_label := Label.new()
+	zoom_label.text = "缩放:"
+	_toolbar.add_child(zoom_label)
 
 	_zoom_slider = HSlider.new()
 	_zoom_slider.min_value = 0.25
 	_zoom_slider.max_value = 4.0
 	_zoom_slider.step = 0.25
 	_zoom_slider.value = zoom
-	_zoom_slider.custom_minimum_size.x = 100
+	_zoom_slider.custom_minimum_size.x = 80
 	_zoom_slider.value_changed.connect(_on_zoom_changed)
 	_toolbar.add_child(_zoom_slider)
 
@@ -112,17 +115,15 @@ func _build_ui() -> void:
 	_total_spinbox.min_value = 1
 	_total_spinbox.max_value = 9999
 	_total_spinbox.value = total_frames
-	_total_spinbox.custom_minimum_size.x = 80
+	_total_spinbox.custom_minimum_size.x = 70
 	_total_spinbox.value_changed.connect(_on_total_frames_changed)
 	_toolbar.add_child(_total_spinbox)
 
-	# 标尺
 	_frame_ruler = _create_frame_ruler()
 	vbox.add_child(_frame_ruler)
 	if _frame_ruler.has_signal("frame_clicked"):
 		_frame_ruler.frame_clicked.connect(_on_frame_ruler_clicked)
 
-	# 轨道容器（带滚动）
 	_scroll = ScrollContainer.new()
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_ALWAYS
 	_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
@@ -182,8 +183,17 @@ func _queue_redraw_all() -> void:
 
 func _on_play_pressed() -> void:
 	_playing = not _playing
+	_play_accum = 0.0
 	_play_btn.text = "⏸" if _playing else "▶"
 	playback_toggled.emit(_playing)
+
+
+func _on_stop_pressed() -> void:
+	_playing = false
+	_play_accum = 0.0
+	_play_btn.text = "▶"
+	current_frame = 0
+	playback_toggled.emit(false)
 
 
 func _on_zoom_changed(value: float) -> void:
@@ -198,7 +208,6 @@ func _on_frame_ruler_clicked(frame: int) -> void:
 	current_frame = frame
 
 
-## 加载技能数据并填充轨道
 func set_skill_data(skill: Resource) -> void:
 	_skill_data = skill
 	if not _track_container:
@@ -213,7 +222,10 @@ func set_skill_data(skill: Resource) -> void:
 
 	var anim: Resource = skill.animation if "animation" in skill else null
 	if anim and anim.has_method("get_total_frames"):
-		total_frames = anim.get_total_frames()
+		var t: int = anim.get_total_frames()
+		if t > 0:
+			total_frames = t
+			fps = anim.fps if "fps" in anim else 12
 	else:
 		total_frames = 60
 
@@ -221,6 +233,8 @@ func set_skill_data(skill: Resource) -> void:
 	var event_script := load("res://addons/dnf_framework/editor/timeline/event_track.gd") as GDScript
 	var move_script := load("res://addons/dnf_framework/editor/timeline/movement_track.gd") as GDScript
 	var armor_script := load("res://addons/dnf_framework/editor/timeline/armor_track.gd") as GDScript
+
+	_add_track_label("攻击区间")
 
 	if phase_script:
 		var pt := Control.new()
@@ -232,20 +246,19 @@ func set_skill_data(skill: Resource) -> void:
 		pt.phases_changed.connect(_on_phases_changed)
 		_track_container.add_child(pt)
 
+	_add_track_label("帧事件")
+
 	if event_script:
 		var evt := Control.new()
 		evt.set_script(event_script)
 		evt.custom_minimum_size.y = 28
-		var all_events: Array = []
-		all_events.append_array(skill.events)
-		for p in skill.phases:
-			if p and not p.events.is_empty():
-				all_events.append_array(p.events)
-		evt.events = all_events
+		evt.events = skill.events
 		evt.frame_width = frame_width
 		evt.event_selected.connect(_on_event_selected)
 		evt.events_changed.connect(_on_events_changed)
 		_track_container.add_child(evt)
+
+	_add_track_label("位移")
 
 	if move_script:
 		var mt := Control.new()
@@ -256,6 +269,8 @@ func set_skill_data(skill: Resource) -> void:
 		mt.movement_selected.connect(_on_movement_selected)
 		mt.movements_changed.connect(_on_movements_changed)
 		_track_container.add_child(mt)
+
+	_add_track_label("霸体/无敌")
 
 	if armor_script:
 		var at := Control.new()
@@ -269,24 +284,33 @@ func set_skill_data(skill: Resource) -> void:
 	_queue_redraw_all()
 
 
-func _on_phase_selected(_idx: int) -> void:
-	pass
+func _add_track_label(text: String) -> void:
+	var lbl := Label.new()
+	lbl.text = text
+	lbl.add_theme_font_size_override("font_size", 10)
+	lbl.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5))
+	lbl.custom_minimum_size.y = 16
+	_track_container.add_child(lbl)
+
+
+func _on_phase_selected(idx: int) -> void:
+	phase_selected.emit(idx)
 
 
 func _on_phases_changed() -> void:
 	_queue_redraw_all()
 
 
-func _on_event_selected(_idx: int) -> void:
-	pass
+func _on_event_selected(idx: int) -> void:
+	event_selected.emit(idx)
 
 
 func _on_events_changed() -> void:
 	_queue_redraw_all()
 
 
-func _on_movement_selected(_idx: int) -> void:
-	pass
+func _on_movement_selected(idx: int) -> void:
+	movement_selected.emit(idx)
 
 
 func _on_movements_changed() -> void:

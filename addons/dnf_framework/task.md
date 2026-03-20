@@ -3,61 +3,55 @@
 ## Phase 1-5: 基础框架 ✅ 全部完成
 
 - [x] InputBuffer（帧输入缓冲 + 连招检测 + 方向历史）
-- [x] FrameAnimationPlayer（帧计数驱动动画播放 + 事件系统）
 - [x] FrameCharacterBody2D（帧驱动物理角色 + save/load）
 - [x] DNFStates + DNFCharacter（状态机 + 受击 + 取消系统）
 - [x] DNFHitbox / DNFHurtbox / DNFHitBehavior / DNFCombatManager
 - [x] DNFMove + DNFInputType + DNFInputEqualCheck + DNFCommandMotionInput
-- [x] 5 个示例场景 + 152 项自动化测试
+- [x] 5 个示例场景 + 自动化测试
 
 ---
 
-## Phase 6: 核心数据层 + FramePlayer + Phase 系统 ⭐
+## Phase 6: 核心数据层 + DNFAnimatedSprite2D + Phase 系统 ✅
 
 ### 6.1 Resource 数据层 ✅
 
-- [x] 6.1.1 `resources/animation/frame_data.gd` — DNFFrameData
-- [x] 6.1.2 `resources/animation/animation_data.gd` — DNFAnimationData
-- [x] 6.1.3 `resources/skill/attack_phase.gd` — DNFAttackPhase ★
-- [x] 6.1.4 `resources/skill/movement_phase.gd` — DNFMovementPhase
-- [x] 6.1.5 `resources/skill/frame_event.gd` — DNFFrameEvent（12 种事件类型）
-- [x] 6.1.6 `resources/combat/hitbox_data.gd` — DNFHitboxData（含 HitLevel 枚举）
-- [x] 6.1.7 `combat/scripts/hit_behavior.gd` — HitBehavior 扩充
-  - ✅ damage_type / element / skill_coefficient / fixed_damage
+- [x] 6.1.1 使用 Godot 原生 SpriteFrames 管理帧动画（已移除自定义 DNFFrameData/DNFAnimationData/DNFSpriteFrames）
+- [x] 6.1.2 `resources/skill/attack_phase.gd` — DNFAttackPhase ★
+- [x] 6.1.3 `resources/skill/movement_phase.gd` — DNFMovementPhase
+- [x] 6.1.4 `resources/skill/frame_event.gd` — DNFFrameEvent（12 种事件类型）
+- [x] 6.1.5 `resources/combat/hitbox_data.gd` — DNFHitboxData（含 HitLevel 枚举）
+- [x] 6.1.6 `combat/scripts/hit_behavior.gd` — HitBehavior 扩充
 
-### 6.2 SkillDataV2 ✅
+### 6.2 SkillData ✅
 
-- [x] 6.2.1 `resources/skill/skill_data_v2.gd` — DNFSkillDataV2
+- [x] 6.2.1 `resources/skill/skill_data_v2.gd` — DNFSkillData（animation_name 引用 SpriteFrames 动画名）
 - [x] 6.2.2 `resources/skill/skill_ui_data.gd` — DNFSkillUIData
 - [x] 6.2.3 `resources/skill/input_condition.gd` — DNFInputCondition
 
 ### 6.3 运行时 ✅
 
-- [x] 6.3.1 `runtime/frame/frame_player.gd` — DNFFramePlayer
-- [x] 6.3.2 `runtime/combat/hitbox_component.gd` — DNFHitboxComponent
-- [x] 6.3.3 `runtime/combat/hurtbox_component.gd` — DNFHurtboxComponent
-- [x] 6.3.4 `runtime/skill/skill_component_v2.gd` — DNFSkillComponentV2
+- [x] 6.3.1 `runtime/frame/animated_sprite.gd` — DNFAnimatedSprite2D（继承 AnimatedSprite2D + tick() 回滚驱动）
+- [x] 6.3.2 `runtime/frame/animation_preview.gd` — DNFAnimationPreview
+- [x] 6.3.3 `runtime/combat/hitbox_component.gd` — DNFHitboxComponent
+- [x] 6.3.4 `runtime/combat/hurtbox_component.gd` — DNFHurtboxComponent
+- [x] 6.3.5 `runtime/skill/skill_component_v2.gd` — DNFSkillComponent
 
 ### 6.4 CharacterData ✅
 
-- [x] 6.4.1 `resources/character/character_data.gd` — DNFCharacterData
+- [x] 6.4.1 `resources/character/character_data.gd` — DNFCharacterData（sprite_frames: SpriteFrames）
 - [x] 6.4.2 `resources/character/character_stats.gd` — DNFCharacterStats（28 项属性）
 
-### 6.5 集成 + 测试 ✅（部分）
+### 6.5 集成 + 清理 ✅
 
 - [x] 6.5.1 创建 runtime/ resources/ 目录结构
-- [ ] 6.5.2 迁移保留模块到 runtime/ 目录
-  - InputBuffer → runtime/input/
-  - FrameCharacterBody2D → runtime/character/
-  - DNFStates + DNFCharacter → runtime/character/
-  - CombatManager → runtime/combat/
-  - FrameAnimationPlayer → runtime/frame/（或保留）
-- [ ] 6.5.3 更新所有 preload/extends 路径
-- [x] 6.5.4 更新 plugin.gd 注册（新增 4 个自定义类型）
-- [x] 6.5.5 适配测试（Phase6_DataLayer 75 项 + Phase10_Editor + Phase11_Panels，总计 246/246 通过）
-- [x] 6.5.6 创建新示例（`examples/phase6_skill_data/` 鬼斩技能全流程演示）
-- [x] 6.5.7 所有 Resource 添加中文 `##` 文档注释
-- [x] 6.5.8 CONFIGURATOR_GUIDE.md 配置器使用指南
+- [x] 6.5.2 更新 plugin.gd（注册 DNFAnimatedSprite2D 等自定义类型）
+- [x] 6.5.3 更新测试 — 169/169 通过
+- [x] 6.5.4 CONFIGURATOR_GUIDE.md 配置器使用指南
+- [x] 6.5.5 已移除弃用模块：
+  - ❌ DNFFramePlayer → 用 DNFAnimatedSprite2D 替代
+  - ❌ DNFSpriteFrames / DNFAnimationData / DNFFrameData → 用原生 SpriteFrames 替代
+  - ❌ DNF 动画编辑器（animation_editor.gd） → 使用 Godot 原生 SpriteFrames Inspector
+  - ❌ animation_inspector.gd → 不再需要
 
 ---
 
@@ -70,7 +64,7 @@
 - [ ] 7.5 `runtime/stats/stats_component.gd` — 属性计算组件
 - [ ] 7.6 重构 DNFCharacter 集成 CharacterStats
 - [ ] 7.7 重构 CombatManager 使用 DamageCalculator
-- [ ] 7.8 扩充 DNFStates (+DEAD/GRAB/GRABBED/CHANNELING/CHARGING/STUNNED/FROZEN/PETRIFIED)
+- [ ] 7.8 扩充 DNFStates
 - [ ] 7.9 测试 + 示例
 
 ## Phase 8: Buff/Debuff + 状态异常
@@ -84,10 +78,10 @@
 ## Phase 9: 技能深化 + 霸体 + 格挡/抓取
 
 - [ ] 9.1 `runtime/combat/super_armor.gd`
-- [ ] 9.2 格挡系统 (BLOCK + guard_break)
-- [ ] 9.3 抓取系统 (GRAB/GRABBED + 解除)
-- [ ] 9.4 蓄力/持续释放 (CHARGING/CHANNELING)
-- [ ] 9.5 被动技能 (passive_manager)
+- [ ] 9.2 格挡系统
+- [ ] 9.3 抓取系统
+- [ ] 9.4 蓄力/持续释放
+- [ ] 9.5 被动技能
 - [ ] 9.6 测试 + 示例
 
 ## Phase 10: 编辑器 — Timeline + Phase Editor + Hitbox Preview ✅
@@ -101,9 +95,8 @@
 - [x] 10.7 `editor/preview/hitbox_preview.gd` — Hitbox 叠加预览
 - [x] 10.8 `editor/preview/sprite_preview.gd` — 帧 Sprite 预览
 - [x] 10.9 `editor/inspectors/dnf_inspector_plugin.gd` — Inspector 增强
-- [x] 10.10 注册 Bottom Panel（DNF Timeline / DNF 技能 / DNF 角色）
-- [x] 10.11 Hitbox 模板系统 (横斩/刺击/范围/上打/扫腿/弹道 预设)
-- [ ] 10.12 批量操作 (选中多帧 → 应用 hitbox) — 后续迭代
+- [x] 10.10 注册 Bottom Panel
+- [x] 10.11 Hitbox 模板系统（6 种预设）
 
 ## Phase 11: 编辑器 — Skill + Character Editor ✅
 
@@ -118,6 +111,6 @@
 - [ ] 12.2 `resources/enemy/ai_behavior.gd`
 - [ ] 12.3 `runtime/enemy/enemy_character.gd`
 - [ ] 12.4 `runtime/enemy/ai_component.gd`
-- [ ] 12.5 完整角色示例 (配置器创建)
-- [ ] 12.6 完整敌人示例 (配置器创建)
+- [ ] 12.5 完整角色示例
+- [ ] 12.6 完整敌人示例
 - [ ] 12.7 README.md + 配置器教程

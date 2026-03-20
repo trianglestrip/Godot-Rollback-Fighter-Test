@@ -1,4 +1,4 @@
-extends "res://addons/dnf_framework/state_machine/scripts/dnf_character.gd"
+extends "res://addons/dnf_framework/runtime/character/dnf_character.gd"
 
 ## 阶段四示例：连招取消系统
 ## J = 轻攻击（可取消到重攻击）
@@ -184,20 +184,24 @@ func _update_cancel_windows() -> void:
 	if _current_move == null:
 		return
 
+	_skill_frame = state_tick
+
 	if _current_move.move_name == "light_attack":
-		if state_tick >= 8 and state_tick < 16:
-			available_cancels = ["heavy_attack", "launcher"]
-		else:
-			available_cancels.clear()
+		var cw := DNFCancelWindow.new()
+		cw.start_frame = 8
+		cw.end_frame = 15
+		cw.allowed_skills = ["heavy_attack", "launcher"]
+		_active_cancel_windows = [cw]
 
 	elif _current_move.move_name == "heavy_attack":
-		if state_tick >= 12 and state_tick < 22:
-			available_cancels = ["launcher"]
-		else:
-			available_cancels.clear()
+		var cw := DNFCancelWindow.new()
+		cw.start_frame = 12
+		cw.end_frame = 21
+		cw.allowed_skills = ["launcher"]
+		_active_cancel_windows = [cw]
 
 	elif _current_move.move_name == "launcher":
-		available_cancels.clear()
+		_active_cancel_windows.clear()
 
 
 func on_hit_landed(target: Node, behavior: DNFHitBehavior) -> void:
@@ -244,7 +248,7 @@ func _update_visuals() -> void:
 		if _current_move:
 			move_name = " (" + _current_move.move_name + ")"
 		state_label.text = get_state_name() + move_name + " [" + str(state_tick) + "]"
-		if not available_cancels.is_empty():
+		if not _active_cancel_windows.is_empty():
 			state_label.text += " CAN CANCEL"
 		if hitstop_remaining > 0:
 			state_label.text += " HITSTOP"

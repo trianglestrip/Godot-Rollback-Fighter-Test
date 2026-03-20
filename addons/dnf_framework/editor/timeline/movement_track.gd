@@ -2,22 +2,23 @@
 extends Control
 
 ## 位移区间轨道 — 绘制 MovementPhase 区间为蓝色矩形
-## 支持：拖拽创建、调整、移动
+## 支持：拖拽创建、调整、移动、Delete 删除
 
 signal movement_selected(index: int)
 signal movements_changed()
 
-## 位移区间列表（DNFMovementPhase）
 var movements: Array = []:
 	set(v):
 		movements = v
 		queue_redraw()
-## 每帧像素宽度
 var frame_width: float = 16.0:
 	set(v):
 		frame_width = v
 		queue_redraw()
-## 当前选中索引
+var current_frame: int = 0:
+	set(v):
+		current_frame = v
+		queue_redraw()
 var selected_index: int = -1:
 	set(v):
 		selected_index = v
@@ -30,6 +31,7 @@ var _drag_phase_index: int = -1
 
 func _ready() -> void:
 	custom_minimum_size.y = 28
+	focus_mode = Control.FOCUS_CLICK
 
 
 func _draw() -> void:
@@ -46,9 +48,23 @@ func _draw() -> void:
 		var end_f: int = mov.end_frame
 		var x := start_f * frame_width
 		var w := maxf(4.0, (end_f - start_f + 1) * frame_width)
-		var col := Color(0.3, 0.5, 0.9) if i == selected_index else Color(0.2, 0.4, 0.7)
+		var col := Color(0.4, 0.6, 1.0) if i == selected_index else Color(0.2, 0.4, 0.7)
 		draw_rect(Rect2(x, 4, w, height - 8), col)
 		draw_rect(Rect2(x, 4, w, height - 8), Color(1, 1, 1, 0.3), false)
+
+		var vel: Vector2 = mov.velocity
+		var label_text := "→%.0f" % vel.x if vel.x != 0 else ""
+		if vel.y != 0:
+			label_text += " ↑%.0f" % vel.y
+		var font: Font = ThemeDB.fallback_font
+		var font_size: int = 9
+		if font and w > 20 and not label_text.is_empty():
+			draw_string(font, Vector2(x + 3, height - 8), label_text, HORIZONTAL_ALIGNMENT_LEFT, int(w) - 6, font_size)
+
+	# 播放头
+	var playhead_x := current_frame * frame_width
+	if playhead_x <= width:
+		draw_line(Vector2(playhead_x, 0), Vector2(playhead_x, height), Color.RED, 1.0)
 
 
 func _gui_input(event: InputEvent) -> void:
@@ -57,6 +73,7 @@ func _gui_input(event: InputEvent) -> void:
 		if mb.button_index == MOUSE_BUTTON_LEFT:
 			var frame := int(mb.position.x / frame_width)
 			if mb.pressed:
+				grab_focus()
 				_handle_mouse_press(mb.position.x, frame)
 			else:
 				_handle_mouse_release(frame)
@@ -65,6 +82,11 @@ func _gui_input(event: InputEvent) -> void:
 		var mm := event as InputEventMouseMotion
 		_handle_mouse_motion(mm.position.x)
 		accept_event()
+	elif event is InputEventKey:
+		var key := event as InputEventKey
+		if key.pressed and key.keycode == KEY_DELETE:
+			_delete_selected()
+			accept_event()
 
 
 func _handle_mouse_press(local_x: float, frame: int) -> void:
@@ -164,3 +186,11 @@ func _create_movement(start_f: int, end_f: int) -> void:
 		movements.append(mov)
 		selected_index = movements.size() - 1
 		movement_selected.emit(selected_index)
+
+
+func _delete_selected() -> void:
+	if selected_index >= 0 and selected_index < movements.size():
+		movements.remove_at(selected_index)
+		selected_index = -1
+		movements_changed.emit()
+		queue_redraw()

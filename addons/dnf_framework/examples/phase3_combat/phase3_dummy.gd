@@ -1,4 +1,4 @@
-extends "res://addons/dnf_framework/state_machine/scripts/dnf_character.gd"
+extends "res://addons/dnf_framework/runtime/character/dnf_character.gd"
 
 ## 阶段三示例：受击沙包（不主动攻击）
 

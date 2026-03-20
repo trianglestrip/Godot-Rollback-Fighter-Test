@@ -2,56 +2,40 @@ class_name DNFAnimationPreview
 extends Node2D
 
 ## 帧动画预览组件 — 放入场景即可自动播放
-## 支持从目录加载独立帧图片，或直接指定 AnimationData 列表
-## 播放时间 = 帧数 / (fps × speed_scale)
+## 支持从目录加载独立帧图片，自动创建原生 SpriteFrames
 
-const P_AnimData = preload("res://addons/dnf_framework/resources/animation/animation_data.gd")
-const P_FrameData = preload("res://addons/dnf_framework/resources/animation/frame_data.gd")
-const P_FramePlayer = preload("res://addons/dnf_framework/runtime/frame/frame_player.gd")
+const P_AnimSprite = preload("res://addons/dnf_framework/runtime/frame/animated_sprite.gd")
 
 signal animation_changed(anim_name: String)
 signal all_animations_played
 
-## 精灵帧图片所在目录（res:// 路径）
 @export var sprite_folder: String = ""
-## 预配置的动画列表（优先于 sprite_folder）
-@export var animations: Array[Resource] = []
-## 基础帧率
 @export var fps: int = 12
-## 全局速率倍率（影响所有动画，叠加在动画自身的 speed_scale 之上）
 @export var speed_scale: float = 1.0
-## 是否自动播放
 @export var auto_play: bool = true
-## 是否循环播放所有动画
 @export var loop_all: bool = true
-## 动画分组配置：格式为 {"动画名": [起始帧, 结束帧], ...}
 @export var animation_groups: Dictionary = {}
 
-var _sprite: Sprite2D
-var _frame_player: DNFFramePlayer
-var _anim_list: Array = []
+var _animated_sprite: AnimatedSprite2D
+var _anim_names: Array[String] = []
 var _current_anim_index: int = 0
 var _label: Label
 
 
 func _ready() -> void:
 	_setup_nodes()
-	if not sprite_folder.is_empty() or not animations.is_empty():
+	if not sprite_folder.is_empty():
 		_load_animations()
-		if auto_play and not _anim_list.is_empty():
+		if auto_play and not _anim_names.is_empty():
 			_play_current()
 
 
 func _setup_nodes() -> void:
-	_sprite = Sprite2D.new()
-	_sprite.name = "Sprite2D"
-	add_child(_sprite)
-
-	_frame_player = P_FramePlayer.new()
-	_frame_player.name = "FramePlayer"
-	_frame_player.sprite = _sprite
-	_frame_player.animation_finished.connect(_on_animation_finished)
-	add_child(_frame_player)
+	_animated_sprite = P_AnimSprite.new()
+	_animated_sprite.name = "AnimatedSprite"
+	_animated_sprite.sprite_frames = SpriteFrames.new()
+	_animated_sprite.animation_finished.connect(_on_animation_finished)
+	add_child(_animated_sprite)
 
 	_label = Label.new()
 	_label.name = "AnimNameLabel"
@@ -63,10 +47,6 @@ func _setup_nodes() -> void:
 
 
 func _load_animations() -> void:
-	if not animations.is_empty():
-		_anim_list = animations.duplicate()
-		return
-
 	if sprite_folder.is_empty():
 		return
 
@@ -75,22 +55,35 @@ func _load_animations() -> void:
 		push_warning("DNFAnimationPreview: 在 '%s' 中未找到图片" % sprite_folder)
 		return
 
+	var sf := SpriteFrames.new()
+	# Remove the auto-created "default" animation
+	if sf.has_animation("default"):
+		sf.remove_animation("default")
+
 	if animation_groups.is_empty():
-		var anim := _create_animation("all", textures, true)
-		_anim_list.append(anim)
+		sf.add_animation("all")
+		sf.set_animation_speed("all", fps)
+		sf.set_animation_loop("all", true)
+		for tex in textures:
+			sf.add_frame("all", tex)
+		_anim_names.append("all")
 	else:
 		for anim_name in animation_groups:
 			var range_arr = animation_groups[anim_name]
 			if range_arr is Array and range_arr.size() >= 2:
 				var start_idx: int = range_arr[0]
 				var end_idx: int = mini(range_arr[1], textures.size() - 1)
-				var sub_textures: Array[Texture2D] = []
+				var is_loop: bool = range_arr[2] if range_arr.size() > 2 else false
+				sf.add_animation(anim_name)
+				sf.set_animation_speed(anim_name, fps)
+				sf.set_animation_loop(anim_name, is_loop)
 				for i in range(start_idx, end_idx + 1):
 					if i < textures.size():
-						sub_textures.append(textures[i])
-				var is_loop = range_arr[2] if range_arr.size() > 2 else false
-				var anim := _create_animation(anim_name, sub_textures, is_loop)
-				_anim_list.append(anim)
+						sf.add_frame(anim_name, textures[i])
+				_anim_names.append(anim_name)
+
+	_animated_sprite.sprite_frames = sf
+	_animated_sprite.speed_scale = speed_scale
 
 
 func _load_textures_from_folder(folder_path: String) -> Array[Texture2D]:
@@ -127,33 +120,18 @@ func _load_textures_from_folder(folder_path: String) -> Array[Texture2D]:
 	return textures
 
 
-func _create_animation(anim_name: String, textures: Array[Texture2D], is_loop: bool = false) -> Resource:
-	var anim := P_AnimData.new()
-	anim.anim_name = anim_name
-	anim.fps = fps
-	anim.speed_scale = speed_scale
-	anim.loop = is_loop
-	anim.frames = []
-	for tex in textures:
-		var fd := P_FrameData.new()
-		fd.texture = tex
-		fd.duration = 1
-		anim.frames.append(fd)
-	return anim
-
-
 func _play_current() -> void:
-	if _current_anim_index < 0 or _current_anim_index >= _anim_list.size():
+	if _current_anim_index < 0 or _current_anim_index >= _anim_names.size():
 		return
-	var anim = _anim_list[_current_anim_index]
-	_frame_player.play(anim)
-	_label.text = anim.anim_name
-	animation_changed.emit(anim.anim_name)
+	var anim_name: String = _anim_names[_current_anim_index]
+	_animated_sprite.play(anim_name)
+	_label.text = anim_name
+	animation_changed.emit(anim_name)
 
 
-func _on_animation_finished(_anim_name: String) -> void:
+func _on_animation_finished() -> void:
 	_current_anim_index += 1
-	if _current_anim_index >= _anim_list.size():
+	if _current_anim_index >= _anim_names.size():
 		if loop_all:
 			_current_anim_index = 0
 		else:
@@ -162,22 +140,17 @@ func _on_animation_finished(_anim_name: String) -> void:
 	_play_current()
 
 
-func _process(delta: float) -> void:
-	if _frame_player:
-		_frame_player.advance(delta)
-
-
 func initialize() -> void:
-	_anim_list.clear()
+	_anim_names.clear()
 	_current_anim_index = 0
 	_load_animations()
-	if auto_play and not _anim_list.is_empty():
+	if auto_play and not _anim_names.is_empty():
 		_play_current()
 
 
 func play_animation(anim_name: String) -> void:
-	for i in range(_anim_list.size()):
-		if _anim_list[i].anim_name == anim_name:
+	for i in range(_anim_names.size()):
+		if _anim_names[i] == anim_name:
 			_current_anim_index = i
 			_play_current()
 			return
@@ -185,23 +158,23 @@ func play_animation(anim_name: String) -> void:
 
 
 func play_next() -> void:
-	_current_anim_index = (_current_anim_index + 1) % _anim_list.size()
+	_current_anim_index = (_current_anim_index + 1) % _anim_names.size()
 	_play_current()
 
 
 func play_prev() -> void:
-	_current_anim_index = (_current_anim_index - 1 + _anim_list.size()) % _anim_list.size()
+	_current_anim_index = (_current_anim_index - 1 + _anim_names.size()) % _anim_names.size()
 	_play_current()
 
 
 func get_animation_names() -> PackedStringArray:
 	var names := PackedStringArray()
-	for anim in _anim_list:
-		names.append(anim.anim_name)
+	for n in _anim_names:
+		names.append(n)
 	return names
 
 
 func get_current_animation_name() -> String:
-	if _current_anim_index >= 0 and _current_anim_index < _anim_list.size():
-		return _anim_list[_current_anim_index].anim_name
+	if _current_anim_index >= 0 and _current_anim_index < _anim_names.size():
+		return _anim_names[_current_anim_index]
 	return ""

@@ -1,8 +1,8 @@
-class_name DNFSkillDataV2
+class_name DNFSkillData
 extends Resource
 
 ## 技能定义 — Phase 区间模型（核心）
-## 显示层 = AnimationData，逻辑层 = phases + events + movement
+## 动画引用 = SpriteFrames 中的动画名，逻辑层 = phases + events + movement
 
 enum DamageType { PHYSICAL_PERCENT, MAGICAL_PERCENT, INDEPENDENT }
 enum Element { NEUTRAL, FIRE, ICE, LIGHT, DARK }
@@ -13,8 +13,10 @@ enum SuperArmorLevel { NONE, LIGHT, HEAVY, FULL }
 @export var skill_name: String = ""
 ## 技能显示名称
 @export var display_name: String = ""
-## 关联的帧动画数据（DNFAnimationData）
-@export var animation: Resource
+## 关联的动画名（对应 SpriteFrames 中的动画名）
+@export var animation_name: String = ""
+## 动画总帧数（手动设置，或由编辑器自动填入）
+@export var total_frames: int = 0
 
 @export_group("攻击区间")
 ## 攻击判定区间列表（DNFAttackPhase）
@@ -43,10 +45,8 @@ enum SuperArmorLevel { NONE, LIGHT, HEAVY, FULL }
 @export var super_armor_level: SuperArmorLevel = SuperArmorLevel.NONE
 
 @export_group("取消系统")
-## 是否可被取消到其他技能
-@export var cancelable: bool = false
-## 可取消到的技能名列表
-@export var cancel_into: Array[String] = []
+## 取消窗口列表（DNFCancelWindow），定义可取消的帧区间及允许的目标技能
+@export var cancel_windows: Array = []
 
 @export_group("使用条件")
 ## 仅地面可用
@@ -64,9 +64,7 @@ enum SuperArmorLevel { NONE, LIGHT, HEAVY, FULL }
 
 
 func get_total_frames() -> int:
-	if animation:
-		return animation.get_total_frames()
-	return 0
+	return total_frames
 
 
 func get_phases_at_frame(frame: int) -> Array:
@@ -90,11 +88,25 @@ func get_events_at_frame(frame: int) -> Array:
 	for ev in events:
 		if ev.frame == frame:
 			result.append(ev)
-	for phase in phases:
-		for ev in phase.events:
-			if ev.frame == frame:
-				result.append(ev)
 	return result
+
+
+func get_cancel_windows_at_frame(frame: int) -> Array:
+	var result: Array = []
+	for cw in cancel_windows:
+		if cw.contains_frame(frame):
+			result.append(cw)
+	return result
+
+
+func can_cancel_at_frame(frame: int, target_skill_name: String, has_hit: bool) -> bool:
+	for cw in cancel_windows:
+		if cw.contains_frame(frame):
+			if cw.on_hit_only and not has_hit:
+				continue
+			if cw.is_skill_allowed(target_skill_name):
+				return true
+	return false
 
 
 func check_input(input_dict: Dictionary) -> bool:

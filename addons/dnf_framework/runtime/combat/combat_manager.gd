@@ -2,19 +2,19 @@ class_name DNFCombatManager
 extends Node
 
 ## 战斗管理器：统一处理 Hitbox/Hurtbox 碰撞检测和伤害结算
-
-const PRELOAD_HITBOX = preload("res://addons/dnf_framework/combat/scripts/dnf_hitbox.gd")
-const PRELOAD_HURTBOX = preload("res://addons/dnf_framework/combat/scripts/dnf_hurtbox.gd")
-const PRELOAD_HIT_BEHAVIOR = preload("res://addons/dnf_framework/combat/scripts/hit_behavior.gd")
+## 支持 HitMode: ONCE / PER_FRAME / INTERVAL
 
 signal hit_resolved(attacker: Node, defender: Node, behavior: DNFHitBehavior)
 
-## 已处理的攻击记录（防止同一攻击多次命中）
+## 命中记录：key = "hitboxInstanceId_defenderInstanceId"
+## value = { "count": int, "last_frame": int }
 var _hit_tracker: Dictionary = {}
+var _frame_counter: int = 0
 
 
 func _physics_process(_delta: float) -> void:
 	process_combat()
+	_frame_counter += 1
 
 
 func process_combat() -> void:
@@ -43,13 +43,41 @@ func process_combat() -> void:
 			if defender == null or defender == attacker:
 				continue
 
-			var hit_key := str(hitbox.get_instance_id()) + "_" + str(defender.get_instance_id())
-			if _hit_tracker.has(hit_key):
-				continue
-
 			if _check_overlap(hitbox, hurtbox):
-				_hit_tracker[hit_key] = true
-				_resolve_hit(attacker, defender, hitbox)
+				_try_hit(attacker, defender, hitbox)
+
+
+func _try_hit(attacker: Node, defender: Node, hitbox: DNFHitbox) -> void:
+	var behavior: DNFHitBehavior = hitbox.hit_behavior
+	if behavior == null:
+		return
+
+	var hit_key := str(hitbox.get_instance_id()) + "_" + str(defender.get_instance_id())
+
+	if not _hit_tracker.has(hit_key):
+		_hit_tracker[hit_key] = { "count": 0, "last_frame": -999 }
+
+	var record: Dictionary = _hit_tracker[hit_key]
+	var mode: DNFHitBehavior.HitMode = behavior.hit_mode
+
+	match mode:
+		DNFHitBehavior.HitMode.ONCE:
+			if record.count >= 1:
+				return
+		DNFHitBehavior.HitMode.PER_FRAME:
+			if record.last_frame == _frame_counter:
+				return
+			if behavior.max_hits > 0 and record.count >= behavior.max_hits:
+				return
+		DNFHitBehavior.HitMode.INTERVAL:
+			if _frame_counter - record.last_frame < behavior.hit_interval:
+				return
+			if behavior.max_hits > 0 and record.count >= behavior.max_hits:
+				return
+
+	record.count += 1
+	record.last_frame = _frame_counter
+	_resolve_hit(attacker, defender, hitbox)
 
 
 func _check_overlap(hitbox: DNFHitbox, hurtbox: DNFHurtbox) -> bool:
@@ -86,3 +114,22 @@ func clear_hit_tracker_for(hitbox: DNFHitbox) -> void:
 			keys_to_remove.append(key)
 	for key in keys_to_remove:
 		_hit_tracker.erase(key)
+
+
+func get_hit_count(hitbox: DNFHitbox, defender: Node) -> int:
+	var hit_key := str(hitbox.get_instance_id()) + "_" + str(defender.get_instance_id())
+	if _hit_tracker.has(hit_key):
+		return _hit_tracker[hit_key].count
+	return 0
+
+
+func _save_state() -> Dictionary:
+	return {
+		"tracker": _hit_tracker.duplicate(true),
+		"fc": _frame_counter,
+	}
+
+
+func _load_state(state: Dictionary) -> void:
+	_hit_tracker = state.get("tracker", {}).duplicate(true)
+	_frame_counter = state.get("fc", 0)

@@ -1,4 +1,4 @@
-extends "res://addons/dnf_framework/state_machine/scripts/dnf_character.gd"
+extends "res://addons/dnf_framework/runtime/character/dnf_character.gd"
 
 ## 阶段三示例：带攻击和受击的角色
 

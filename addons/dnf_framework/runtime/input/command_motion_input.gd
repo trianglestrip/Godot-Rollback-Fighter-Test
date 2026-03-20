@@ -1,18 +1,11 @@
 class_name DNFCommandMotionInput
-extends "res://addons/dnf_framework/move_system/scripts/input_type.gd"
+extends "res://addons/dnf_framework/runtime/input/input_type.gd"
 
 ## 指令输入检测：从 input_history 中回溯匹配序列（如 QCF = 下 -> 下前 -> 前）
 
-## 面朝右时的输入序列
 @export var input_sequence_right: Array[String] = []
-
-## 面朝左时的输入序列
 @export var input_sequence_left: Array[String] = []
-
-## 输入回溯窗口（帧数）
 @export var buffer_window: int = 15
-
-## 额外需要按下的按键（如"punch"）
 @export var required_button: String = ""
 
 

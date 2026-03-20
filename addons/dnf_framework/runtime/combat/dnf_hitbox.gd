@@ -3,9 +3,6 @@ extends Area2D
 
 ## 攻击判定框
 
-const PRELOAD_HIT_BEHAVIOR = preload("res://addons/dnf_framework/combat/scripts/hit_behavior.gd")
-const PRELOAD_CHARACTER = preload("res://addons/dnf_framework/state_machine/scripts/dnf_character.gd")
-
 enum HitLevel {
 	MID,
 	LOW,

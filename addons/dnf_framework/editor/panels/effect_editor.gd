@@ -7,7 +7,7 @@ signal event_changed()
 
 const FrameEvent = preload("res://addons/dnf_framework/resources/skill/frame_event.gd")
 
-var _current_skill: Resource  ## DNFSkillDataV2
+var _current_skill: Resource  ## DNFSkillData
 var _events: Array = []  ## 当前编辑的事件列表（技能顶层 events）
 var _selected_event_idx: int = -1
 

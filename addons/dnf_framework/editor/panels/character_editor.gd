@@ -8,7 +8,6 @@ signal character_saved(path: String)
 const CharacterData = preload("res://addons/dnf_framework/resources/character/character_data.gd")
 const CharacterStats = preload("res://addons/dnf_framework/resources/character/character_stats.gd")
 const SkillDataV2 = preload("res://addons/dnf_framework/resources/skill/skill_data_v2.gd")
-const AnimationData = preload("res://addons/dnf_framework/resources/animation/animation_data.gd")
 
 var _current_character: Resource
 
@@ -226,12 +225,14 @@ func _refresh_all() -> void:
 
 	_char_name_edit.text = _current_character.character_name
 	_display_name_edit.text = _current_character.display_name
-	_atlas_preview.texture = _current_character.atlas
+	_atlas_preview.texture = _current_character.portrait
 
 	_anim_list.clear()
-	var anims: Dictionary = _current_character.animations
-	for anim_name in anims.keys():
-		_anim_list.add_item(anim_name)
+	var sf: SpriteFrames = _current_character.sprite_frames
+	if sf:
+		var anim_names: PackedStringArray = sf.get_animation_names()
+		for anim_name in anim_names:
+			_anim_list.add_item(anim_name)
 
 	_skill_list.clear()
 	var skills: Array = _current_character.skills
@@ -297,17 +298,17 @@ func _on_anim_selected(_idx: int) -> void:
 func _on_add_animation() -> void:
 	if _current_character == null:
 		return
-	var anims: Dictionary = _current_character.animations
+	var sf: SpriteFrames = _current_character.sprite_frames
+	if sf == null:
+		sf = SpriteFrames.new()
+		_current_character.sprite_frames = sf
 	var base_name := "new_anim"
 	var name_key := base_name
 	var i := 0
-	while anims.has(name_key):
+	while sf.has_animation(name_key):
 		i += 1
 		name_key = "%s_%d" % [base_name, i]
-	var anim_data := AnimationData.new()
-	anim_data.anim_name = name_key
-	anims[name_key] = anim_data
-	_current_character.set("animations", anims)
+	sf.add_animation(name_key)
 	_anim_list.add_item(name_key)
 	_set_status("已添加动画: " + name_key)
 
@@ -318,9 +319,9 @@ func _on_delete_animation() -> void:
 	if idx.is_empty():
 		return
 	var anim_name := _anim_list.get_item_text(idx[0])
-	var anims: Dictionary = _current_character.animations
-	anims.erase(anim_name)
-	_current_character.set("animations", anims)
+	var sf: SpriteFrames = _current_character.sprite_frames
+	if sf and sf.has_animation(anim_name):
+		sf.remove_animation(anim_name)
 	_refresh_all()
 	_set_status("已删除动画: " + anim_name)
 
@@ -372,7 +373,7 @@ func _on_new_character() -> void:
 	var char_data := CharacterData.new()
 	char_data.character_name = "new_character"
 	char_data.stats = CharacterStats.new()
-	char_data.animations = {}
+	char_data.sprite_frames = SpriteFrames.new()
 	char_data.skills = []
 	load_character(char_data)
 	_set_status("已新建角色")

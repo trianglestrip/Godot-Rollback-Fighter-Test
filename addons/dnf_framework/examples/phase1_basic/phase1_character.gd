@@ -1,4 +1,4 @@
-extends "res://addons/dnf_framework/frame_physics/scripts/frame_character_body2d.gd"
+extends "res://addons/dnf_framework/runtime/physics/frame_character_body2d.gd"
 
 ## 阶段一示例角色：行走、跳跃、帧动画
 
@@ -6,7 +6,6 @@ extends "res://addons/dnf_framework/frame_physics/scripts/frame_character_body2d
 @export var jump_speed: float = -14.0
 @export var run_speed: float = 9.0
 
-@onready var anim_player: FrameAnimationPlayer = $FrameAnimationPlayer
 @onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var input_buf: InputBuffer = $InputBuffer
 @onready var label: Label = $Label

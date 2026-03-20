@@ -130,7 +130,6 @@ func get_all_combos() -> Dictionary:
 	return _combos.duplicate()
 
 
-## 记录方向输入到历史（每帧调用一次）
 func record_direction(direction: String) -> void:
 	var entry := {"direction": direction, "frame": _frame_count}
 	_input_history.append(entry)
@@ -138,7 +137,6 @@ func record_direction(direction: String) -> void:
 		_input_history.remove_at(0)
 
 
-## 获取输入历史（供指令输入检测使用）
 func get_input_history() -> Array[Dictionary]:
 	return _input_history
 

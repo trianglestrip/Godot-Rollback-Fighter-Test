@@ -2,7 +2,7 @@
 
 [ext_resource type="PackedScene" path="res://addons/dnf_framework/examples/phase5_full/full_fighter.tscn" id="1"]
 [ext_resource type="Script" path="res://addons/dnf_framework/examples/phase5_full/full_main.gd" id="2"]
-[ext_resource type="Script" path="res://addons/dnf_framework/combat/scripts/combat_manager.gd" id="3"]
+[ext_resource type="Script" path="res://addons/dnf_framework/runtime/combat/combat_manager.gd" id="3"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_ground"]
 size = Vector2(800, 16)

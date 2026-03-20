@@ -1,4 +1,4 @@
-extends "res://addons/dnf_framework/state_machine/scripts/dnf_character.gd"
+extends "res://addons/dnf_framework/runtime/character/dnf_character.gd"
 
 ## 阶段五：完整 DNF 风格角色
 ## 支持：行走/奔跑/跳跃/冲刺/轻攻/重攻/上挑/连段取消
@@ -208,18 +208,25 @@ func _sync_hitbox_direction() -> void:
 func _update_cancel_windows() -> void:
 	if _current_move == null:
 		return
+
+	_skill_frame = state_tick
+
 	if _current_move.move_name == "light_attack":
-		if state_tick >= 8 and state_tick < 16:
-			available_cancels = ["heavy_attack", "launcher"]
-		else:
-			available_cancels.clear()
+		var cw := DNFCancelWindow.new()
+		cw.start_frame = 8
+		cw.end_frame = 15
+		cw.allowed_skills = ["heavy_attack", "launcher"]
+		_active_cancel_windows = [cw]
+
 	elif _current_move.move_name == "heavy_attack":
-		if state_tick >= 12 and state_tick < 22:
-			available_cancels = ["launcher"]
-		else:
-			available_cancels.clear()
+		var cw := DNFCancelWindow.new()
+		cw.start_frame = 12
+		cw.end_frame = 21
+		cw.allowed_skills = ["launcher"]
+		_active_cancel_windows = [cw]
+
 	elif _current_move.move_name == "launcher":
-		available_cancels.clear()
+		_active_cancel_windows.clear()
 
 
 func on_hit_landed(target: Node, behavior: DNFHitBehavior) -> void:
@@ -265,7 +272,7 @@ func _update_visuals() -> void:
 		if _current_move:
 			move_info = " (" + _current_move.move_name + ")"
 		state_label.text = get_state_name() + move_info + " [" + str(state_tick) + "]"
-		if not available_cancels.is_empty():
+		if not _active_cancel_windows.is_empty():
 			state_label.text += " [CANCEL]"
 
 	if health_bar:

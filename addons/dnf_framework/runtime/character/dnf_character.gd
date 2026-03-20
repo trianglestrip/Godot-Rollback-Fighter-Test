@@ -1,12 +1,7 @@
 class_name DNFCharacter
-extends "res://addons/dnf_framework/frame_physics/scripts/frame_character_body2d.gd"
+extends "res://addons/dnf_framework/runtime/physics/frame_character_body2d.gd"
 
 ## DNF 风格角色基类，集成状态机、输入、动画
-
-const PRELOAD_DNF_STATES = preload("res://addons/dnf_framework/state_machine/scripts/dnf_states.gd")
-const PRELOAD_HIT_BEHAVIOR = preload("res://addons/dnf_framework/combat/scripts/hit_behavior.gd")
-const PRELOAD_MOVE = preload("res://addons/dnf_framework/move_system/scripts/move.gd")
-const PRELOAD_FIGHTER_STATE = preload("res://addons/dnf_framework/state_machine/scripts/fighter_state.gd")
 
 signal on_state_changed(new_state: int, old_state: int)
 signal on_hit_received(behavior: DNFHitBehavior, direction: float)
@@ -27,12 +22,13 @@ var hitstop_remaining: int = 0
 var _previous_state: int = DNFStates.State.IDLE
 var _hitstun_duration: int = 12
 
-## 招式/取消系统
 var available_moves: Array[DNFMove] = []
-var available_cancels: Array[String] = []
-var _cancel_on_hit_only: bool = false
 var _current_move: DNFMove = null
 var _has_hit_this_attack: bool = false
+## 当前激活的取消窗口（由 SkillComponent 或外部设置）
+var _active_cancel_windows: Array = []
+## 当前技能帧（由 SkillComponent 同步）
+var _skill_frame: int = -1
 
 
 func _physics_process(_delta: float) -> void:
@@ -153,8 +149,8 @@ func _change_state(new_state: int) -> void:
 
 
 func _on_state_enter(_new_state: int, _old_state: int) -> void:
-	available_cancels.clear()
-	_cancel_on_hit_only = false
+	_active_cancel_windows.clear()
+	_skill_frame = -1
 	if _new_state != DNFStates.State.ATTACK:
 		_current_move = null
 		_has_hit_this_attack = false
@@ -164,26 +160,31 @@ func state_transition(state_res: DNFFighterState) -> void:
 	pass
 
 
-## 设置当前可用的取消列表（由 CancelListEvent 调用）
-func set_available_cancels(move_names: Array[String], on_hit_only: bool) -> void:
-	available_cancels = move_names
-	_cancel_on_hit_only = on_hit_only
+func set_cancel_windows(windows: Array) -> void:
+	_active_cancel_windows = windows
 
 
-## 尝试执行招式取消
+func set_skill_frame(frame: int) -> void:
+	_skill_frame = frame
+
+
 func try_cancel(input_dict: Dictionary) -> bool:
-	if available_cancels.is_empty():
-		return false
-	if _cancel_on_hit_only and not _has_hit_this_attack:
+	if _active_cancel_windows.is_empty():
 		return false
 	for move in available_moves:
-		if move.move_name in available_cancels and move.check_input(input_dict):
-			execute_move(move)
-			return true
+		if not move.check_input(input_dict):
+			continue
+		for cw in _active_cancel_windows:
+			if not cw.contains_frame(_skill_frame):
+				continue
+			if cw.on_hit_only and not _has_hit_this_attack:
+				continue
+			if cw.is_skill_allowed(move.move_name):
+				execute_move(move)
+				return true
 	return false
 
 
-## 执行一个招式
 func execute_move(move: DNFMove) -> void:
 	_current_move = move
 	_has_hit_this_attack = false
@@ -191,19 +192,14 @@ func execute_move(move: DNFMove) -> void:
 	velocity.x = (move.forward_impulse if facing_right else -move.forward_impulse)
 
 
-## 下面的方法可以在子类中覆写以支持不同输入源
-
 func _get_move_direction() -> float:
 	return 0.0
-
 
 func _is_jump_pressed() -> bool:
 	return false
 
-
 func _is_run_held() -> bool:
 	return false
-
 
 func _is_dash_pressed() -> bool:
 	return false
@@ -216,7 +212,6 @@ func _update_facing(dir: float) -> void:
 		facing_right = false
 
 
-## 被击中时调用（由 CombatManager 调用）
 func receive_hit(behavior: DNFHitBehavior, attack_dir: float) -> void:
 	health = maxi(health - behavior.damage, 0)
 	_hitstun_duration = behavior.hitstun_frames
@@ -240,7 +235,6 @@ func receive_hit(behavior: DNFHitBehavior, attack_dir: float) -> void:
 	on_hit_received.emit(behavior, attack_dir)
 
 
-## 攻击命中目标时调用
 func on_hit_landed(target: Node, behavior: DNFHitBehavior) -> void:
 	hitstop_remaining = behavior.hitstop_frames
 	velocity.x += (-1.0 if facing_right else 1.0) * behavior.self_knockback
@@ -260,8 +254,7 @@ func _save_state() -> Dictionary:
 	base["hp"] = health
 	base["hitstop"] = hitstop_remaining
 	base["hitstun_dur"] = _hitstun_duration
-	base["cancels"] = available_cancels.duplicate()
-	base["cancel_hit"] = _cancel_on_hit_only
+	base["skill_frame"] = _skill_frame
 	base["has_hit"] = _has_hit_this_attack
 	return base
 
@@ -274,6 +267,5 @@ func _load_state(state: Dictionary) -> void:
 	health = state.get("hp", max_health)
 	hitstop_remaining = state.get("hitstop", 0)
 	_hitstun_duration = state.get("hitstun_dur", 12)
-	available_cancels.assign(state.get("cancels", []))
-	_cancel_on_hit_only = state.get("cancel_hit", false)
+	_skill_frame = state.get("skill_frame", -1)
 	_has_hit_this_attack = state.get("has_hit", false)

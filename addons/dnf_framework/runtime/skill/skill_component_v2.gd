@@ -1,7 +1,7 @@
-class_name DNFSkillComponentV2
+class_name DNFSkillComponent
 extends Node
 
-## 技能执行组件 — 驱动 FramePlayer + Phase 匹配 + 事件触发
+## 技能执行组件 — 驱动 DNFAnimatedSprite2D + Phase 匹配 + 事件触发
 
 signal skill_started(skill: Resource)
 signal skill_ended(skill: Resource)
@@ -9,12 +9,12 @@ signal phase_entered(phase: Resource, frame: int)
 signal phase_exited(phase: Resource, frame: int)
 signal event_fired(event: Resource)
 
-@export var frame_player_path: NodePath
+@export var animated_sprite_path: NodePath
 @export var hitbox_component_path: NodePath
 
-var _frame_player: Node  # DNFFramePlayer
+var _animated_sprite: Node  # DNFAnimatedSprite2D
 var _hitbox_component: Node  # DNFHitboxComponent
-var _active_skill: Resource  # DNFSkillDataV2
+var _active_skill: Resource  # DNFSkillData
 var _current_frame: int = 0
 var _active_phases: Dictionary = {}
 var _fired_events: Dictionary = {}
@@ -22,13 +22,13 @@ var _cooldowns: Dictionary = {}
 
 
 func _ready() -> void:
-	if frame_player_path:
-		_frame_player = get_node_or_null(frame_player_path)
+	if animated_sprite_path:
+		_animated_sprite = get_node_or_null(animated_sprite_path)
 	if hitbox_component_path:
 		_hitbox_component = get_node_or_null(hitbox_component_path)
 
-	if _frame_player and _frame_player.has_signal("animation_finished"):
-		_frame_player.animation_finished.connect(_on_animation_finished)
+	if _animated_sprite and _animated_sprite.has_signal("animation_finished"):
+		_animated_sprite.animation_finished.connect(_on_animation_finished)
 
 
 func play_skill(skill: Resource) -> bool:
@@ -43,8 +43,8 @@ func play_skill(skill: Resource) -> bool:
 	_active_phases.clear()
 	_fired_events.clear()
 
-	if _frame_player and skill.animation:
-		_frame_player.play(skill.animation)
+	if _animated_sprite and not skill.animation_name.is_empty():
+		_animated_sprite.tick_play(skill.animation_name)
 
 	if skill.cooldown_frames > 0:
 		_cooldowns[skill.skill_name] = skill.cooldown_frames
@@ -59,9 +59,9 @@ func tick() -> void:
 	if _active_skill == null:
 		return
 
-	if _frame_player:
-		_frame_player.tick()
-		_current_frame = _frame_player.get_current_frame_index()
+	if _animated_sprite:
+		_animated_sprite.tick()
+		_current_frame = _animated_sprite.frame
 
 	_match_phases(_current_frame)
 	_match_movement(_current_frame)
@@ -99,7 +99,7 @@ func _match_movement(frame: int) -> void:
 
 	for mov in _active_skill.movement:
 		if mov.contains_frame(frame):
-			var vel: Vector2 = mov.velocity
+			var vel: Vector2 = mov.get_velocity_at_frame(frame)
 			if mov.relative_to_facing and "facing_right" in character:
 				if not character.facing_right:
 					vel.x = -vel.x
@@ -120,7 +120,7 @@ func _fire_events(frame: int) -> void:
 		event_fired.emit(ev)
 
 
-func _on_animation_finished(_anim_name: String) -> void:
+func _on_animation_finished(_anim_name: StringName = &"") -> void:
 	if _active_skill:
 		var skill = _active_skill
 		interrupt()

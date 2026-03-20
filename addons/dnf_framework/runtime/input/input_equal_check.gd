@@ -1,5 +1,5 @@
 class_name DNFInputEqualCheck
-extends "res://addons/dnf_framework/move_system/scripts/input_type.gd"
+extends "res://addons/dnf_framework/runtime/input/input_type.gd"
 
 ## 检查输入字典中某个键是否等于预期值
 

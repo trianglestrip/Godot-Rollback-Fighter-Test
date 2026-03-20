@@ -55,42 +55,29 @@ SkillData {
 }
 ```
 
-### 两层分离：AnimationData（纯显示） + SkillData（纯逻辑）
+### 两层分离：SpriteFrames（纯显示） + SkillData（纯逻辑）
 
 | 层 | 数据 | 职责 |
 |----|------|------|
-| **AnimationData** | frames: Array[FrameData] | 纯显示：Atlas region / duration / 不含逻辑 |
-| **SkillData** | phases + events + movement | 纯逻辑：hitbox 区间 / 事件 / 位移 / 霸体 |
+| **SpriteFrames**（原生） | 多组动画，每组含帧纹理 | 纯显示：帧序列 / FPS / 循环 |
+| **SkillData** | phases + events + movement + animation_name | 纯逻辑：hitbox 区间 / 事件 / 位移 / 霸体 |
 
-**FrameData 只做显示，不放 hitbox！**
+**SpriteFrames 只做显示，不放 hitbox！SkillData 通过 animation_name 引用 SpriteFrames 中的动画。**
 
 ---
 
 ## 三、核心数据结构
 
-### 3.1 FrameData（纯显示帧）
+### 3.1 SpriteFrames（原生 Godot 资源 — 纯显示）
 
-```gdscript
-class_name DNFFrameData extends Resource
+直接使用 Godot 原生 `SpriteFrames` 资源。无需自定义数据结构。
 
-@export var region: Rect2        # Atlas 切片区域
-@export var duration: int = 1    # 持续帧数
-@export var anchor_offset: Vector2 = Vector2.ZERO  # 锚点偏移
-```
+- 在编辑器中自带完整 Inspector UI，可视化添加/管理动画和帧
+- 支持多组动画（idle、attack、run 等）
+- 每帧支持独立纹理 + per-frame duration
+- `DNFAnimatedSprite2D` 继承 `AnimatedSprite2D`，直接使用
 
-### 3.2 AnimationData（帧动画）
-
-```gdscript
-class_name DNFAnimationData extends Resource
-
-@export var anim_name: String
-@export var fps: int = 12
-@export var frames: Array       # DNFFrameData
-@export var loop: bool = false
-@export var atlas: Texture2D
-```
-
-### 3.3 AttackPhase（攻击区间 — 核心）
+### 3.2 AttackPhase（攻击区间 — 核心）
 
 ```gdscript
 class_name DNFAttackPhase extends Resource
@@ -143,41 +130,20 @@ enum EventType {
 @export var data: Dictionary
 ```
 
-### 3.7 SkillDataV2（技能定义 — 核心）
+### 3.7 SkillData（技能定义 — 核心）
 
 ```gdscript
-class_name DNFSkillDataV2 extends Resource
-
-enum DamageType { PHYSICAL_PERCENT, MAGICAL_PERCENT, INDEPENDENT }
-enum Element { NEUTRAL, FIRE, ICE, LIGHT, DARK }
-enum SuperArmorLevel { NONE, LIGHT, HEAVY, FULL }
+class_name DNFSkillData extends Resource
 
 @export var skill_name: String
 @export var display_name: String
-@export var animation: Resource      # DNFAnimationData
+@export var animation_name: String   # 对应 SpriteFrames 中的动画名
+@export var total_frames: int = 0    # 动画总帧数
 
 @export var phases: Array            # DNFAttackPhase
 @export var events: Array            # DNFFrameEvent
 @export var movement: Array          # DNFMovementPhase
-
-@export var mp_cost: int = 0
-@export var hp_cost: int = 0
-@export var cooldown_frames: int = 0
-
-@export var damage_type: DamageType
-@export var element: Element
-@export var skill_coefficient: float = 1.0
-@export var super_armor_level: SuperArmorLevel
-
-@export var cancelable: bool = false
-@export var cancel_into: Array[String]
-
-@export var ground_only: bool = true
-@export var air_usable: bool = false
-@export var priority: int = 0
-@export var input_conditions: Array  # DNFInputCondition
-
-@export var ui: Resource             # DNFSkillUIData
+# ... 伤害/冷却/取消/条件/UI 等属性
 ```
 
 ### 3.8 CharacterData（角色总入口）
@@ -187,42 +153,42 @@ class_name DNFCharacterData extends Resource
 
 @export var character_name: String
 @export var display_name: String
-@export var atlas: Texture2D
 @export var portrait: Texture2D
-@export var animations: Dictionary   # String → DNFAnimationData
-@export var skills: Array            # DNFSkillDataV2
-@export var stats: Resource          # DNFCharacterStats
+@export var sprite_frames: SpriteFrames  # 原生 SpriteFrames，包含所有动画
+@export var skills: Array                # DNFSkillData
+@export var stats: Resource              # DNFCharacterStats
 ```
 
 ---
 
 ## 四、运行时系统设计
 
-### 4.1 FramePlayer（只管播放动画帧）
+### 4.1 DNFAnimatedSprite2D（帧动画精灵 — 继承 AnimatedSprite2D）
 
 ```gdscript
-func play(anim: Resource):   # DNFAnimationData
-    _anim = anim
-    _frame_index = 0
-    _frame_timer = 0
+## 继承 AnimatedSprite2D，@tool 支持编辑器预览
+## 使用 Godot 原生 SpriteFrames 资源
+## 额外提供 tick() 驱动模式（回滚兼容）
 
-func tick():
-    _frame_timer += 1
-    var f = _anim.get_frame_at_index(_frame_index)
-    if _frame_timer >= f.duration:
-        _frame_timer = 0
-        _frame_index += 1
-    apply_display(f)
+# 原生 SpriteFrames — 在 Inspector 中自带完整编辑器
+# play() / play_backwards() / stop() / pause() 来自父类
+# autoplay 来自父类
+
+func tick():               # 帧驱动推进（回滚兼容）
+func tick_play(anim):      # tick 模式开始播放
+func tick_play_backwards(): # tick 模式反向播放
+func tick_stop():          # tick 模式停止
+func _save_state() / _load_state()  # 回滚存档
 ```
 
-**FramePlayer 只管显示，不管逻辑。**
+**DNFAnimatedSprite2D 只管显示，不管逻辑。** 使用原生 SpriteFrames，编辑器自带完整帧管理 UI。
 
-### 4.2 SkillComponentV2（管逻辑：Phase 匹配）
+### 4.2 SkillComponent（管逻辑：Phase 匹配）
 
 ```gdscript
 func tick():
-    frame_player.tick()
-    var frame = frame_player.get_current_frame_index()
+    animated_sprite.tick()
+    var frame = animated_sprite.current_frame
 
     # 匹配攻击区间
     for phase in active_skill.phases:
@@ -366,7 +332,8 @@ addons/dnf_framework/
 │
 ├── runtime/                          # 运行时
 │   ├── frame/
-│   │   └── frame_player.gd          # 帧播放器（只管显示）
+│   │   ├── animated_sprite.gd       # DNFAnimatedSprite2D（帧动画精灵）
+│   │   └── animation_preview.gd     # DNFAnimationPreview（预览组件）
 │   ├── character/
 │   │   ├── dnf_character.gd         # 角色基类
 │   │   ├── dnf_states.gd            # 状态枚举
@@ -390,9 +357,6 @@ addons/dnf_framework/
 │       └── ai_component.gd
 │
 ├── resources/                        # 数据定义（全 Resource）
-│   ├── animation/
-│   │   ├── animation_data.gd        # 帧序列
-│   │   └── frame_data.gd            # 单帧（纯显示：region + duration）
 │   ├── skill/
 │   │   ├── skill_data_v2.gd         # 技能（含 phases + events + movement）
 │   │   ├── attack_phase.gd          # 攻击区间 ★ 核心
@@ -453,28 +417,28 @@ addons/dnf_framework/
 - ✅ DNFMove + DNFInputType（招式系统 + 取消系统）
 - ✅ Phase 1-5 示例 + 152 项测试全部通过
 
-### Phase 6: 核心数据层 + FramePlayer + Phase 系统 ✅ 已完成
+### Phase 6: 核心数据层 + DNFAnimatedSprite2D + Phase 系统 ✅ 已完成
 
-- ✅ 6.1 Resource 数据层
-  - ✅ `resources/animation/frame_data.gd` — DNFFrameData
-  - ✅ `resources/animation/animation_data.gd` — DNFAnimationData
+- ✅ 6.1 Resource 数据层（使用原生 SpriteFrames，已移除自定义 DNFFrameData/DNFAnimationData/DNFSpriteFrames）
   - ✅ `resources/skill/attack_phase.gd` — DNFAttackPhase
   - ✅ `resources/skill/movement_phase.gd` — DNFMovementPhase
   - ✅ `resources/skill/frame_event.gd` — DNFFrameEvent（12 种事件类型）
   - ✅ `resources/combat/hitbox_data.gd` — DNFHitboxData
-- ✅ 6.2 SkillDataV2 重写
-  - ✅ `resources/skill/skill_data_v2.gd` — DNFSkillDataV2
+- ✅ 6.2 SkillData
+  - ✅ `resources/skill/skill_data_v2.gd` — DNFSkillData（animation_name 引用 SpriteFrames 中的动画名）
   - ✅ `resources/skill/skill_ui_data.gd` — DNFSkillUIData
   - ✅ `resources/skill/input_condition.gd` — DNFInputCondition
 - ✅ 6.3 运行时组件
-  - ✅ `runtime/frame/frame_player.gd` — DNFFramePlayer
+  - ✅ `runtime/frame/animated_sprite.gd` — DNFAnimatedSprite2D（继承 AnimatedSprite2D，使用原生 SpriteFrames + tick() 回滚驱动）
+  - ✅ `runtime/frame/animation_preview.gd` — DNFAnimationPreview
   - ✅ `runtime/combat/hitbox_component.gd` — DNFHitboxComponent
   - ✅ `runtime/combat/hurtbox_component.gd` — DNFHurtboxComponent
-  - ✅ `runtime/skill/skill_component_v2.gd` — DNFSkillComponentV2
+  - ✅ `runtime/skill/skill_component_v2.gd` — DNFSkillComponent
 - ✅ 6.4 CharacterData
-  - ✅ `resources/character/character_data.gd` — DNFCharacterData
+  - ✅ `resources/character/character_data.gd` — DNFCharacterData（sprite_frames: SpriteFrames 原生资源）
   - ✅ `resources/character/character_stats.gd` — DNFCharacterStats（28 项 DNF 属性）
 - ✅ 6.5 plugin.gd 更新 + 测试 + 中文文档注释
+- ✅ 6.6 已移除弃用模块：DNFFramePlayer、DNFSpriteFrames、DNFAnimationData、DNFFrameData、动画编辑器
   - ✅ plugin.gd 注册 4 个新自定义类型
   - ✅ Phase6_DataLayer 测试套件（75 项测试）
   - ✅ 全部 246/246 测试通过（含 Phase 10/11 编辑器脚本加载测试）
@@ -573,8 +537,8 @@ editor/    = @tool 编辑器代码
 
 ### 5. 解耦
 ```
-FramePlayer（显示）≠ SkillComponentV2（逻辑）
-SkillDataV2（数据）≠ HitboxComponent（运行时）
+DNFAnimatedSprite2D（显示）≠ SkillComponent（逻辑）
+SkillData（数据）≠ HitboxComponent（运行时）
 ```
 
 ### 6. Rollback-friendly
@@ -589,7 +553,7 @@ SkillDataV2（数据）≠ HitboxComponent（运行时）
 | 坑 | 后果 | 正确做法 |
 |----|------|---------|
 | 逐帧配 hitbox | 30帧×10技能=300条重复数据 | AttackPhase 区间共享 hitbox |
-| 用 AnimationPlayer | 无法帧精确控制 | FramePlayer + AnimationData |
+| 用 AnimationPlayer | 无法帧精确控制 | DNFAnimatedSprite2D + AnimationData |
 | Hitbox 写死在场景 | 无法按区间切换 | HitboxData + HitboxComponent 运行时管理 |
 | 不做 Resource | 无法编辑器化 | 一切配置 = Resource |
 | Skill 和 Move 分两套 | 概念混乱 | 统一为 SkillDataV2 |
